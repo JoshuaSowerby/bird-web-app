@@ -1,4 +1,4 @@
-exports.authMiddleware = async (req, res, next) =>{
+exports.verifyToken = async (req, res, next) =>{
     console.log('auth not implemented');
     next();
 };
