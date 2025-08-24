@@ -86,6 +86,7 @@ class birdClassifier():
         self.model.eval()
 
     def classifyImg(self, image):
+        image = image.convert('RGB')#ensure it is jpg
         input=self.val_transform(image).unsqueeze(0)#adds fake batch dim
         features=self.dinoV2(input)
         output=self.model(features)
