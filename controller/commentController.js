@@ -35,7 +35,7 @@ exports.getCommentVotes = async (req, res) =>{
     } catch (error){
         res.status(500).json({ message:error.message})
     }
-})
+}
 
 // POST COMMENT
 exports.postComment= async (req, res)=>{
