@@ -1,9 +1,9 @@
 const { spawn } = require("child_process");
-const { getAllPosts, createPost, getPostById } = require("../models/posts");
+const { getAllPosts, createPost, getPostById, deletePostById, getPostVotes } = require("../models/posts");
 
 // GET POST
 exports.getAllBirdPosts= async (req, res)=>{
-    //
+    //add pagination and filters etc
     try {
         const result = await getAllPosts();
         res.status(201).json(result)
@@ -12,7 +12,6 @@ exports.getAllBirdPosts= async (req, res)=>{
     }
 }
 
-//add pagination and filters etc
 exports.getBirdPost= async (req, res)=>{
     //
     try{
@@ -23,6 +22,16 @@ exports.getBirdPost= async (req, res)=>{
         res.status(201).json(post);
     } catch (error){
         res.status(500).json({message: error.message});
+    }
+}
+
+exports.getPostVotes = async (req, res) =>{
+    try{// should add check for visibility/block TODO
+        const {post_id} = req.body;
+        const result = await getPostVotes(post_id);
+        res.status(201).json({message:"success", result}) 
+    } catch (error){
+        res.status(500).json({ message:error.message})
     }
 }
 // POST POST
@@ -58,7 +67,7 @@ exports.postBirdPost= async (req, res)=>{
         });
         //!!! FIX, add check for if valid..
         const result= createPost(user_id, imgURL, title, output, 'visible');
-        res.status(201).json({message:'success', result});
+        res.status(201).json({message:'success', post_id:result});
     } catch (error) {
         res.status(500).json({message:error.message});
     }
@@ -83,7 +92,7 @@ exports.deleteBirdPost= async (req, res)=>{
     try{
         const user_id = req.user_id;
         const {post_id} = req.body;
-        const result = async deletePostById(user_id, post_id);
+        const result =  await deletePostById(user_id, post_id);
         res.status(201).json({message:'success', result});
     } catch(error){
         res.status(501).json({ message:"'deleteBirdPost' not yet implemented"})

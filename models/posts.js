@@ -90,7 +90,7 @@ exports.voteOnPost = async (user_id, post_id, vote)=>{
     return result;
 };
 
-exports.getVotes = async (post_id)=>{
+exports.getPostVotes = async (post_id)=>{
     const conn = await pool.getConnection();
     const result = await conn.query(`
         SELECT SUM(vote) FROM post_votes WHERE post_id=?`,[post_id]);

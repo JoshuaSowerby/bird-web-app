@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllBirdPosts, getBirdPost, voteOnBirdPost, postBirdPost, deleteBirdPost } = require('../controller/birdPostController');
+const { getAllBirdPosts, getBirdPost, voteOnBirdPost, postBirdPost, deleteBirdPost, getPostVotes } = require('../controller/birdPostController');
 const { verifyToken } = require('../middleware/authMiddleware');
 
 
@@ -14,5 +14,6 @@ router.get('/:postId', getBirdPost);
 router.delete('/:postId', verifyToken, deleteBirdPost);
 // `/bird/posts/:postId/vote`
 router.put('/:postId/vote', verifyToken, voteOnBirdPost);
+router.get('/:postId/vote', getPostVotes);
 
 module.exports=router;
