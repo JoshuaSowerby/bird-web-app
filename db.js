@@ -21,9 +21,10 @@ const pool = mariadb.createPool({
             */
             CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
+                #public_id#should add this, and then change jwt to use it instead,
                 username VARCHAR(25) NOT NULL,
-                email VARCHAR(255) NOT NULL,
-                password VARCHAR(255) NOT NULL
+                email VARCHAR(255) NOT NULL UNIQUE,
+                pw_hash VARCHAR(60) NOT NULL
             );
 
             /* posts

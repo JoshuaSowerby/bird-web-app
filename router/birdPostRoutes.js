@@ -3,6 +3,9 @@ const router = express.Router();
 const { getAllBirdPosts, getBirdPost, voteOnBirdPost, postBirdPost, deleteBirdPost } = require('../controller/birdPostController');
 const { verifyToken } = require('../middleware/authMiddleware');
 
+
+//may need middleware to check permissions, but can do that later
+//like ....., verifyVisibility, verifyToken, get/postThing) etc
 // `/bird/posts`
 router.post('/', verifyToken, postBirdPost);
 router.get('/', getAllBirdPosts);

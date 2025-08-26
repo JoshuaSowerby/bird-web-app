@@ -13,34 +13,34 @@ try {
 */
 
 //add pagination and querying
-exports.getAll = async () =>{
+exports.getAllPosts = async () =>{
     const conn = await pool.getConnection();
     const rows = await conn.query('SELECT * FROM posts');
     conn.release();
     return rows;
 };
 
-exports.getById = async(id) =>{
+exports.getPostById = async(id) =>{
     const conn = await pool.getConnection();
     const rows = await conn.query('SELECT * FROM posts WHERE id = ?',[id]);
     conn.release();
     return rows[0];
 };
 
-exports.createPost = async (user_id, imgURL, title, visibility='visible') => {
+exports.createPost = async (user_id, imgURL, title, ai_species, visibility='visible') => {
     
     const conn = await pool.getConnection();
     const result = await conn.query(`
-        INSERT INTO posts ( user_id, imgURL, title, visibility
-        ) VALUES (?, ?, ?, ?)`,[user_id, imgURL, title, visibility]);
+        INSERT INTO posts ( user_id, imgURL, title, ai_species, visibility
+        ) VALUES (?, ?, ?, ?, ?)`,[user_id, imgURL, title, ai_species, visibility]);
     conn.release();
-    return { id: Number(result.insertId)};///check
+    return result.insertId;///check
 }
 
 // update
 //Do we need an update? yeah for visibility at least
 //is there a better way to do this? probably joining strings...
-exports.updateById = async (id,visibility,title)=>{
+exports.updatePostById = async (id,visibility,title)=>{
     const conn = await pool.getConnection();
     let visResult;
     let titleResult;
@@ -68,9 +68,11 @@ exports.updateById = async (id,visibility,title)=>{
 };
 
 // delete
-exports.deleteById = async(id) =>{
+exports.deletePostById = async(post_id, user_id) =>{
     const conn = await pool.getConnection();
-    const result  = await conn.query('DELETE FROM posts WHERE id = ?',[id]);
+    const result  = await conn.query(
+        `DELETE FROM posts
+        WHERE id = ? AND user_id =?`,[post_id, user_id]);
     conn.release();
     return { deleted: result.affectedRows > 0 };
 };
