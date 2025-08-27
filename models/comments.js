@@ -32,18 +32,18 @@ exports.createComment = async (user_id, post_id, text, parent_id) => {
                 INSERT INTO comments ( user_id, post_id, text)
                 VALUES (?, ?, ?)`,[user_id, post_id, text]);
         }
-        
-        return result.insertId;
+        const comment_id = Number(result.insertId)
+        return comment_id;
     } finally{conn.release()};
 };
 
 // update
-exports.updateCommentById = async (post_id, user_id,text)=>{
+exports.updateCommentById = async (comment_id, user_id,text)=>{
     const conn = await pool.getConnection();
     const result= await conn.query(`
         UPDATE comments
         SET text = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ? AND user_id =?`, [text, post_id, user_id]
+        WHERE id = ? AND user_id =?`, [text, comment_id, user_id]
     );
     conn.release();
     return { updated: result.affectedRows > 0};
@@ -67,7 +67,7 @@ exports.voteOnComment = async (user_id, comment_id, vote)=>{
             vote = VALUES(vote)`,[user_id, comment_id, vote]
     );
     conn.release();
-    return result;
+    return result.affectedRows>0;
 };
 
 exports.getCommentVotes = async (comment_id)=>{

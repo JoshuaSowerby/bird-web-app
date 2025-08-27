@@ -28,18 +28,36 @@ exports.getPostById = async(id) =>{
 };
 
 exports.createPost = async (user_id, imgURL, title, ai_species, visibility='visible') => {
-    
+    if (!ai_species){
+        ai_species='pending';
+    }
     const conn = await pool.getConnection();
     const result = await conn.query(`
         INSERT INTO posts ( user_id, imgURL, title, ai_species, visibility
         ) VALUES (?, ?, ?, ?, ?)`,[user_id, imgURL, title, ai_species, visibility]);
     conn.release();
-    return result.insertId;///check
+    const post_id = Number(result.insertId)
+    return post_id;///check
 }
 
+exports.updateBirdPrediction = async (post_id, prediction) =>{
+    const conn = await pool.getConnection();
+    try{
+        const result = await conn.query(`
+                UPDATE posts
+                SET ai_species = ?
+                WHERE id = ?`, [prediction, post_id]);
+    } catch (error){
+        console.error(error);
+    }finally{
+        conn.release();
+    }
+    
+}
 // update
 //Do we need an update? yeah for visibility at least
 //is there a better way to do this? probably joining strings...
+//FIX, please, this is bad
 exports.updatePostById = async (id,visibility,title)=>{
     const conn = await pool.getConnection();
     let visResult;

@@ -10,10 +10,10 @@ const { verifyToken } = require('../middleware/authMiddleware');
 router.post('/', verifyToken, postBirdPost);
 router.get('/', getAllBirdPosts);
 // `/bird/posts/:postId`
-router.get('/:postId', getBirdPost);
-router.delete('/:postId', verifyToken, deleteBirdPost);
+router.get('/:post_id', getBirdPost);
+router.delete('/:post_id', verifyToken, deleteBirdPost);
 // `/bird/posts/:postId/vote`
-router.put('/:postId/vote', verifyToken, voteOnBirdPost);
-router.get('/:postId/vote', getPostVotes);
+router.put('/:post_id/vote', verifyToken, voteOnBirdPost);
+router.get('/:post_id/vote', getPostVotes);
 
 module.exports=router;

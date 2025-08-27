@@ -1,0 +1,103 @@
+# Core
+- ## 80% cpu for 5 minutes
+    - If img classifier doesn't then increase input size
+- ## script to reach 80% for 5 mins
+    - allow bulk uploading
+- ## 2 data types
+    - images, todo
+    - ~~ACID data from relational db...~~
+- ## containerize and store on AWS ECR
+- ## pull for AWS ECR to EC2
+- ## ~~API that can be used as primary interface~~
+- ## user login with session management using JWT, users have meaningful difference
+    - login
+    - jwt
+    - ~~differences, you can only delete your posts, post ownerships etc~~
+# Additional
+- ## extended api
+    - ~~versioning~~
+        - debatable if we do this because I doubt we will get off v0 during this project
+    - pagination
+    - filtering
+    - sorting
+- ## ~~custom processing~~
+    - the bird classifier
+- ## Infrastructure as code
+    - uses infrastructure-as-code technologies such as Docker Compose, CloudFormation, or the CDK
+- ## web client that uses all endpoints
+
+# Misc
+- ~~fix req.params.___~~
+    - ~~to use .params rather than .body~~
+    - ~~to use consistent naming~~
+- some way to reclassify images using the model, or ask it to try again...
+- add input validation to routes
+- add more status codes
+- add console.log() to confirm things are working
+- add bulk post functionality
+- add get for users
+    - GET name
+    - GET posts
+    - GET comments
+    - GET post/comment votes etc
+# SECURITY
+- the final version should't just send them the error, it should be specific to what they did wrong, they don't need to know...
+    - for example if you try to send a duplicate register, it will show you your passwords hash etc
+- think there are others, find FIX and TODO to see them in comments
+
+# Check endpoints
+- should try again with token  of other user...
+## `/api/v0/auth`
+- POST `/register`
+    - register succeeds
+    - duplicate register fails
+- POST `/login`
+    - correct details
+        - works
+        - returns valid JWT with correct .user_id
+    - incorrect email
+        - {"message":"Cannot read properties of undefined (reading 'pw_hash')"}
+    - incorrect pw
+        - {"message":"invalid credentials"}
+## `/api/v0/bird/posts`
+- POST `/`
+    - unverified is unable to post
+    - unable to post without imgURL, should add input val for everything
+    - can successfully post
+        - on post the ai_species will be 'pending'
+        - once the model is finished it should update the post.
+- GET `/`
+    - no posts returns: `[]`
+    - more than 0 posts returns: valid return
+    - TODO, sort and filter by votes, species etc
+    - make votes visible in get so we don't need seperate for votes...
+- GET `/post:id`
+    - works
+    - on invalid id it returns nothing, it should give 404
+- DELETE `/post:id`
+    - authorized: works, will send success if row failed to delete (such as if it doesn't exist), but will tell you it didnt delete in "results"
+    - invalid token: fails
+- PUT `/:post_id/vote`
+    - unauth: access denied
+    - auth: succeeds with -1, 0, 1
+        - invalid number/input: bad error message, improve
+- GET `/:post_id/vote`
+    - correctly returns? try with more users
+    - returns null by default
+## `/api/v0/bird/posts/:postId/comments`
+- POST `/`
+    - works
+- GET `/`
+    - works, kind of bad at the moment as it doesn't nest comments of comments. would be better if it sent them formatted better, or paginated...
+    - TODO, filter and sort comments based off votes
+        - SHOW VOTES in get
+- GET `/:commentId`
+    - works
+- DELETE `/:commentId`
+    - works
+- PUT `/:commentId/vote`
+    - works
+- GET `/:commentId/vote`
+    - works, but null by default
+- no ability to update comment?
+    - there is a models func for this so add it later
