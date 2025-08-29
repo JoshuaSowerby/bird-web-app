@@ -1,4 +1,57 @@
 const mariadb = require('mariadb');
+const S3 = require("@aws-sdk/client-s3");
+
+const s3Client = new S3.S3Client({ region: process.env.REGION });
+
+( async () => {
+    const createCmd = new S3.CreateBucketCommand({
+        Bucket: process.env.BUCKET,
+        Tagging: {
+            TagSet:[
+                {
+                    Key:'qut-username',
+                    Value: process.env.QUT_USERNAME
+                },
+                {
+                    Key: 'purpose',
+                    Value: process.env.PURPOSE
+                }
+            ]
+        }
+    });
+    const taggingCmd = new S3.PutBucketTaggingCommand({
+        Bucket: process.env.BUCKET,
+        Tagging: {
+            TagSet: [
+                {
+                    Key: 'qut-username',
+                    Value: process.env.QUT_USERNAME,
+                },
+                {
+                    Key: 'purpose',
+                    Value: process.env.PURPOSE
+                }
+            ]
+        }
+    });
+    try {
+        console.log('creating s3')
+        let response = await s3Client.send(createCmd);
+        console.log(response);
+        
+    } catch (error) {
+        console.log(error)
+    }
+    try {
+        console.log('tagging s3')
+        response = await s3Client.send(taggingCmd);
+        console.log(response);
+        console.log('done with s3')
+    } catch (error) {
+        console.log(error)
+    }
+    
+})();
 
 const pool = mariadb.createPool({
     host: process.env.DB_HOST || 'localhost',
@@ -34,7 +87,7 @@ const pool = mariadb.createPool({
             CREATE TABLE IF NOT EXISTS posts (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
-                imgURL VARCHAR(255) NOT NULL,
+                imgUUID VARCHAR(255) NOT NULL, #FIX switch to imgUUID
                 title VARCHAR(255) NOT NULL,
                 /* votes INT DEFAULT 0,# has its own table */
                 ai_species VARCHAR(255),
@@ -93,4 +146,4 @@ const pool = mariadb.createPool({
     }
 })();
 
-module.exports = pool;
+module.exports = {pool, s3Client};

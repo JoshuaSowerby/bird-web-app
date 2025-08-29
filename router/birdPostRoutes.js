@@ -2,12 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { getAllBirdPosts, getBirdPost, voteOnBirdPost, postBirdPost, deleteBirdPost, getPostVotes } = require('../controller/birdPostController');
 const { verifyToken } = require('../middleware/authMiddleware');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });//---
+// router.post('/', verifyToken, upload.single('image'), postBirdPost);
 
 
 //may need middleware to check permissions, but can do that later
 //like ....., verifyVisibility, verifyToken, get/postThing) etc
 // `/bird/posts`
-router.post('/', verifyToken, postBirdPost);
+router.post('/', verifyToken, upload.single('image'), postBirdPost);
 router.get('/', getAllBirdPosts);
 // `/bird/posts/:postId`
 router.get('/:post_id', getBirdPost);

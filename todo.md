@@ -26,6 +26,20 @@
     - uses infrastructure-as-code technologies such as Docker Compose, CloudFormation, or the CDK
 - ## web client that uses all endpoints
 
+
+# IMPLEMENT IMG UPLOAD...
+- use S3 bucket
+- replace the img URL with the key value in the mariaDB.
+- on GET return a presigned URL in the response rather that the key value
+- no point in presigned for upload, as we would just have to dl to classify.
+- presigned on dl would work though
+- use form-data instead, so we can use multipart/form-data. so we don't have to upload binaries... we will need multer
+    - https://www.youtube.com/watch?v=srPXMt1Q0nY
+
+# switch votes to dynamoDB
+- do this too fulfill structured non ACID?
+- essentially add votes to the post and comments table, but this variable points to the dynamoDB
+
 # Misc
 - ~~fix req.params.___~~
     - ~~to use .params rather than .body~~

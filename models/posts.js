@@ -1,5 +1,5 @@
-const pool = require('../db.js');
-
+const {pool, s3Client} = require('../db.js');
+const getPresignedURL = require('../utils/presignedURL.js');
 // There isn't any input validation in this...
 //should almost everything be in a try catch clause?
 /*
@@ -17,24 +17,44 @@ exports.getAllPosts = async () =>{
     const conn = await pool.getConnection();
     const rows = await conn.query('SELECT * FROM posts');
     conn.release();
-    return rows;
+    console.log('replace imgUUID with presigned link, paginate, filter, link votes somehow')
+    //TODO FIX IMPORTANT
+    // in rows remove imgUUID and replace with presigned URL\
+    
+    const updatedRows = await Promise.all( //-- ai
+        rows.map(async row => {
+            const presignedURL = await getPresignedURL(row.imgUUID);
+            row.imgURL = presignedURL;
+            delete row.imgUUID;
+            return row;
+        })
+    );
+    return updatedRows;
+    
 };
 
+//TODO show votes in this get
 exports.getPostById = async(id) =>{
     const conn = await pool.getConnection();
     const rows = await conn.query('SELECT * FROM posts WHERE id = ?',[id]);
     conn.release();
+    // removing uuid and adding presigned link
+    const post = rows[0]
+    const presignedURL = await getPresignedURL(post.imgUUID);
+    post.imgURL= presignedURL
+    delete post.imgUUID;
     return rows[0];
 };
 
-exports.createPost = async (user_id, imgURL, title, ai_species, visibility='visible') => {
+//FIX switch to imgUUID
+exports.createPost = async (user_id, imgUUID, title, ai_species, visibility='visible') => {
     if (!ai_species){
         ai_species='pending';
     }
     const conn = await pool.getConnection();
     const result = await conn.query(`
-        INSERT INTO posts ( user_id, imgURL, title, ai_species, visibility
-        ) VALUES (?, ?, ?, ?, ?)`,[user_id, imgURL, title, ai_species, visibility]);
+        INSERT INTO posts ( user_id, imgUUID, title, ai_species, visibility
+        ) VALUES (?, ?, ?, ?, ?)`,[user_id, imgUUID, title, ai_species, visibility]);
     conn.release();
     const post_id = Number(result.insertId)
     return post_id;///check

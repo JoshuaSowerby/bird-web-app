@@ -1,10 +1,11 @@
-const pool = require('../db.js');
+const {pool} = require('../db.js');
 
 //add pagination and querying
 exports.getAllComments = async () =>{
     const conn = await pool.getConnection();
     try{
         const rows = await conn.query('SELECT * FROM comments');
+        console.log('add pagination, query, make pretty...show vote count...')
         return rows;
     } finally {
         conn.release();
@@ -15,6 +16,7 @@ exports.getCommentById = async(id) =>{
     const conn = await pool.getConnection();
     const rows = await conn.query('SELECT * FROM comments WHERE id = ?',[id]);
     conn.release();
+    console.log('show vote count...')
     return rows[0];
 };
 

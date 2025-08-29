@@ -1,6 +1,6 @@
 
 const jwt = require('jsonwebtoken');
-const pool = require('../db.js');// FIX this should be in models?
+const {pool} = require('../db.js');// FIX this should be in models?
 const bcrypt = require('bcrypt');
 
 const generateToken = (id)=>{
@@ -16,17 +16,13 @@ exports.registerUser = async (req, res) => {
     //input val goes here
     const conn = await pool.getConnection();
     const pw_hash = await bcrypt.hash(password,12);
-    console.log(1);
     try {
-        console.log(2);
         
         const result =await conn.query(`
             INSERT INTO users (username, email, pw_hash)
             VALUES (?, ?, ?)`,[username, email, pw_hash]);
-        console.log(3);
         const user_id = Number(result.insertId);
         const token = generateToken(user_id);
-        console.log(4);
         
         res.status(201).json({message:'registration successful',token})
     } catch (error){

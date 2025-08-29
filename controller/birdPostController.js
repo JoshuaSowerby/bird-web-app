@@ -1,5 +1,8 @@
-const { spawnSync, spawn } = require("child_process");
+const { spawn } = require("child_process");
 const { getAllPosts, createPost, getPostById, deletePostById, getPostVotes, updateBirdPrediction, voteOnPost } = require("../models/posts");
+S3 = require("@aws-sdk/client-s3");
+const {s3Client} = require('../db.js')
+const { randomUUID } = require('node:crypto');
 
 // GET POST
 exports.getAllBirdPosts= async (req, res)=>{
@@ -40,21 +43,49 @@ exports.postBirdPost= async (req, res)=>{
     //this needs to change to the actual image rather than URL...
     //!!!! FIX
     try {
-        const {imgURL, title} = req.body;
+        const {title} = req.body;
+        const image = req.file.buffer//---Ai
+        const mimeType = req.file.mimetype;//--Ai
         const user_id = req.user_id; 
+        const imgUUID = randomUUID();
 
-        console.log(imgURL);
-        const model='model.py';
-        
+        //upload img to bucket
+        // TODO FIX create bucket if not exists in db.js
+        try{
+            const response = await s3Client.send(
+                new S3.PutObjectCommand({
+                Bucket: process.env.BUCKET,
+                Key: imgUUID,
+                Body: image,
+                ContentType: mimeType
+                })
+            );
+            //REMOVE this log, it is testing only...s
+            console.log(response);
+        } catch (err){
+            //FIX if this fails the whole thing should cancel
+            console.log(err);
+            res.status(500).json({err});
+            return //think this will early exit
+        }
+
+        console.log(imgUUID);
+        // FIX TO USE .env
+        const model='model.py';// FIX this stuff should be in its own file really...
+        const model_weights='weights.pth'
+
         let output ="";
         let errors ="";
 
         // the img classification comes second, then updates afterwards
-        const result= await createPost(user_id, imgURL, title, output, 'visible');
+        const result= await createPost(user_id, imgUUID, title, output, 'visible');//imgUUID
         const post_id= result;
         res.status(201).json({message:'success', post_id:result});
 
-        const birdClassifier= spawn('python', ["-u",model,imgURL]);
+        const birdClassifier= spawn('python', ["-u",model,model_weights]);
+
+        birdClassifier.stdin.write(req.file.buffer);// --
+        birdClassifier.stdin.end();//--
 
         birdClassifier.stdout.on('data', (data)=>{
             output+=data.toString();
