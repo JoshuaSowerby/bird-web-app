@@ -1,4 +1,4 @@
-make a `.env` with
+make an `.env` with
 ```
 #Web app
 PORT=3000
@@ -17,4 +17,11 @@ MARIADB_ROOT_PASSWORD=rootpass
 MARIADB_DATABASE=birddb
 MARIADB_USER=user
 MARIADB_PASSWORD=pass
+```
+then
+
+```
+docker build -t bird-web-app .
+
+docker-compose up -d
 ```

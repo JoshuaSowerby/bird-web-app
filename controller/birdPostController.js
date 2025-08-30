@@ -85,7 +85,7 @@ exports.postBirdPost= async (req, res)=>{
         const post_id= result;
         res.status(201).json({message:'success', post_id:result});
 
-        const birdClassifier= spawn('python', ["-u",model,head_weights,dinoV2_weights]);
+        const birdClassifier= spawn('python3', ["-u",model,head_weights,dinoV2_weights]);
 
         birdClassifier.stdin.write(req.file.buffer);// --
         birdClassifier.stdin.end();//--
