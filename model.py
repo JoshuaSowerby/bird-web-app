@@ -106,4 +106,4 @@ if __name__ == "__main__":
      #img_path = sys.argv[1]
      img_bytes= sys.stdin.buffer.read()# --
      img=Image.open(io.BytesIO(img_bytes)) # --
-     print(model.classifyImg(img))
+     print(model.classifyImg(img), flush=True)

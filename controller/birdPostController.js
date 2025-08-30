@@ -85,8 +85,9 @@ exports.postBirdPost= async (req, res)=>{
         const post_id= result;
         res.status(201).json({message:'success', post_id:result});
 
-        const birdClassifier= spawn('python3', ["-u",model,head_weights,dinoV2_weights]);
 
+        const birdClassifier= spawn('python3', ["-u",model,head_weights,dinoV2_weights]);
+        console.log(`spawning python`)
         birdClassifier.stdin.write(req.file.buffer);// --
         birdClassifier.stdin.end();//--
 
@@ -109,7 +110,7 @@ exports.postBirdPost= async (req, res)=>{
             // console.log("stderr:", errors.trim());
             //res.status(200).json({message:output.trim()});
             output=output.trim();
-            console.log(output)
+            console.log(`post:${post_id}, predicted:${output}`)
             //update prediction
             updateBirdPrediction(post_id, output)
         });
