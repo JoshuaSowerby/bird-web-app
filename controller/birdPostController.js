@@ -7,8 +7,9 @@ const { randomUUID } = require('node:crypto');
 // GET POST
 exports.getAllBirdPosts= async (req, res)=>{
     //add pagination and filters etc
+    const query = req.query;
     try {
-        const result = await getAllPosts();
+        const result = await getAllPosts(query);
         res.status(201).json(result)
     } catch (error){
         res.status(500).json({ message:error.message});
@@ -62,6 +63,7 @@ exports.postBirdPost= async (req, res)=>{
             );
             //REMOVE this log, it is testing only...s
             console.log(response);
+
         } catch (err){
             //FIX if this fails the whole thing should cancel
             console.log(err);
@@ -72,7 +74,8 @@ exports.postBirdPost= async (req, res)=>{
         console.log(imgUUID);
         // FIX TO USE .env
         const model='model.py';// FIX this stuff should be in its own file really...
-        const model_weights='weights.pth'
+        const head_weights='weights.pth'
+        const dinoV2_weights='dinov2_vits14_pretrain.pth'
 
         let output ="";
         let errors ="";
@@ -82,7 +85,7 @@ exports.postBirdPost= async (req, res)=>{
         const post_id= result;
         res.status(201).json({message:'success', post_id:result});
 
-        const birdClassifier= spawn('python', ["-u",model,model_weights]);
+        const birdClassifier= spawn('python', ["-u",model,head_weights,dinoV2_weights]);
 
         birdClassifier.stdin.write(req.file.buffer);// --
         birdClassifier.stdin.end();//--

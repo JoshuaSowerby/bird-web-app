@@ -87,7 +87,7 @@ const pool = mariadb.createPool({
             CREATE TABLE IF NOT EXISTS posts (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
-                imgUUID VARCHAR(255) NOT NULL, #FIX switch to imgUUID
+                imgUUID VARCHAR(255) NOT NULL UNIQUE, #FIX switch to imgUUID
                 title VARCHAR(255) NOT NULL,
                 /* votes INT DEFAULT 0,# has its own table */
                 ai_species VARCHAR(255),

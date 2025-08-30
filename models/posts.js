@@ -13,15 +13,78 @@ try {
 */
 
 //add pagination and querying
-exports.getAllPosts = async () =>{
+exports.getAllPosts = async (query={}) =>{
     const conn = await pool.getConnection();
-    const rows = await conn.query('SELECT * FROM posts');
+    //let sqlQ=`SELECT * FROM posts WHERE 1=1`//-- WHERE 1=1 is ai
+    
+    //-- ai did coalesce and suggested LEFT JOIN instead of JOIN
+    const values=[]
+    let sqlQ = `SELECT 
+    posts.id AS post_id, posts.user_id AS user_id,
+    users.username AS username, posts.imgUUID AS imgUUID,
+    posts.title AS title, posts.ai_species as ai_species,
+    COALESCE(vote_sum.votes, 0) AS votes,
+    posts.posted_at AS posted_at
+    FROM posts
+    JOIN users ON posts.user_id=users.id
+    LEFT JOIN (
+        SELECT SUM(vote) AS votes, post_id
+        FROM post_votes GROUP BY post_id
+        ) vote_sum ON posts.id = vote_sum.post_id
+    WHERE 1=1
+    `
+    
+    //query builder
+    if (query.ai_species) {//-- ai generated species filter
+         const speciesList = Array.isArray(query.ai_species) ? query.ai_species : query.ai_species.split(",");
+         const placeholders = speciesList.map(() => "?").join(","); 
+         sqlQ += ` AND ai_species IN (${placeholders})`;
+        values.push(...speciesList);
+    }
+    if (query.users){
+        const userList = Array.isArray(query.users) ? query.users : query.users.split(",");
+        const placeholders = userList.map(() => "?").join(","); 
+          sqlQ += ` AND ai_species IN (${placeholders})`;
+         values.push(...userList);
+    }
+    if (query.voteLimit){
+        const voteLimit = parseInt(query.voteLimit);
+        if (!isNaN(voteLimit)){
+            sqlQ += ` AND votes >= ${voteLimit}`;
+        }
+    }
+    try {
+        if (query.sortBy){
+        let sortBy="";
+        switch(query.sortBy.toUpperCase()){
+            case 'VOTES':
+                sortBy="votes";
+                break;
+            case 'POSTED_AT':
+                sortBy="posted_at";
+                break;
+            default:
+                sortBy="votes"
+
+        }
+        if (query.order){
+            const order = query.order.toUpperCase();
+            if (order==='ASC'||order==="DESC"){
+                sqlQ += ` ORDER BY ${sortBy} ${order}`;
+            }
+        }
+    }
+    } catch (error) {
+        console.log(error);
+    }
+    
+    const rows = await conn.query(sqlQ,values);
     conn.release();
     console.log('replace imgUUID with presigned link, paginate, filter, link votes somehow')
     //TODO FIX IMPORTANT
     // in rows remove imgUUID and replace with presigned URL\
     
-    const updatedRows = await Promise.all( //-- ai
+    const updatedRows = await Promise.all( //-- ai gen from pervious iteration
         rows.map(async row => {
             const presignedURL = await getPresignedURL(row.imgUUID);
             row.imgURL = presignedURL;

@@ -7,6 +7,8 @@
     - images, todo
     - ~~ACID data from relational db...~~
 - ## containerize and store on AWS ECR
+- 1.  find out how to set up the .venv for python automatically
+- 2. have docker run a "setup" file first that ensures that our db and s3 bucket are working
 - ## pull for AWS ECR to EC2
 - ## ~~API that can be used as primary interface~~
 - ## user login with session management using JWT, users have meaningful difference
@@ -40,6 +42,39 @@
 - do this too fulfill structured non ACID?
 - essentially add votes to the post and comments table, but this variable points to the dynamoDB
 
+# potential problem with models.py on EC2
+- my of fixed this, would recommend brining dinoV2 model locally so we don't have to import it...
+```
+SqlError: (conn:3, no: 1406, SQLState: 22001) Data too long for column 'ai_species' at row 1
+sql:
+                UPDATE posts
+                SET ai_species = ?
+                WHERE id = ? - parameters:['Downloading: "https://github.com/facebookresearch/dinov2/zipball/main" to /home/ubuntu/.cache/torch/hub/main.zip
+Downloading: "https://dl.fbaipubli...
+    at module.exports.createError (/home/ubuntu/bird-web-app/node_modules/mariadb/lib/misc/errors.js:66:10)
+    at PacketNodeEncoded.readError (/home/ubuntu/bird-web-app/node_modules/mariadb/lib/io/packet.js:588:19)
+    at Query.handleErrorPacket (/home/ubuntu/bird-web-app/node_modules/mariadb/lib/cmd/parser.js:92:24)
+    at Query.readResponsePacket (/home/ubuntu/bird-web-app/node_modules/mariadb/lib/cmd/parser.js:70:21)
+    at PacketInputStream.receivePacketBasic (/home/ubuntu/bird-web-app/node_modules/mariadb/lib/io/packet-input-stream.js:85:9)
+    at PacketInputStream.onData (/home/ubuntu/bird-web-app/node_modules/mariadb/lib/io/packet-input-stream.js:135:20)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5) {
+  sqlMessage: "Data too long for column 'ai_species' at row 1",
+  sql: '\n' +
+    '                UPDATE posts\n' +
+    '                SET ai_species = ?\n' +
+    `                WHERE id = ? - parameters:['Downloading: "https://github.com/facebookresearch/dinov2/zipball/main" to /home/ubuntu/.cache/torch/hub/main.zip\n` +
+    'Downloading: "https://dl.fbaipubli...',
+  fatal: false,
+  errno: 1406,
+  sqlState: '22001',
+  code: 'ER_DATA_TOO_LONG'
+}
+
+```
+
 # Misc
 - ~~fix req.params.___~~
     - ~~to use .params rather than .body~~
@@ -58,6 +93,9 @@
 - the final version should't just send them the error, it should be specific to what they did wrong, they don't need to know...
     - for example if you try to send a duplicate register, it will show you your passwords hash etc
 - think there are others, find FIX and TODO to see them in comments
+
+# optional change
+- move python to its own container, pass the uuid to it so it outputs uuid and pred then watch its  stdout and commit it...
 
 # Check endpoints
 - should try again with token  of other user...

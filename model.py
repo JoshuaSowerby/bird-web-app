@@ -6,6 +6,8 @@ from torchvision.transforms import v2
 from PIL import Image
 import sys
 
+import io ## -- ai
+
 class DeepNet(nn.Module):
     def __init__(self):
         super().__init__()
@@ -77,9 +79,9 @@ class birdClassifier():
 
         #headPath=r"weights.pth"#FIX to use sys.argv[1 or 2]...also in what calls this file...
         headPath=sys.argv[1]#check
-        #backendPath=r""
-        self.dinoV2=torch.hub.load('facebookresearch/dinov2','dinov2_vits14')#,pretrained=False)#if it doesn't work, then load_state_dict
-        #self.dinoV2.load_state_dict(torch.load(backendPath,map_location='cpu'))
+        backendPath=sys.argv[2]#r""
+        self.dinoV2=torch.hub.load('facebookresearch/dinov2','dinov2_vits14', pretrained=False,verbose=False)#,pretrained=False)#if it doesn't work, then load_state_dict
+        self.dinoV2.load_state_dict(torch.load(backendPath,map_location='cpu'))
         self.dinoV2.eval()
 
         self.model= DeepNet().cpu()
@@ -96,7 +98,7 @@ class birdClassifier():
         predicted_bird= self.class_labels[prediction_idx]
         return predicted_bird
 
-import io ## --
+
 
 ##FIX replace img_path with actual image... imgURL
 if __name__ == "__main__":
