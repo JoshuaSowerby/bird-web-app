@@ -47,10 +47,12 @@ exports.getAllPosts = async (query={}) =>{
           sqlQ += ` AND ai_species IN (${placeholders})`;
          values.push(...userList);
     }
+    //should add date query for before and after...
     if (query.voteLimit){
         const voteLimit = parseInt(query.voteLimit);
         if (!isNaN(voteLimit)){
-            sqlQ += ` AND votes >= ${voteLimit}`;
+            sqlQ += ` AND votes >= ?`;
+            values.push(voteLimit);
         }
     }
     try {

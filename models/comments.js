@@ -1,10 +1,28 @@
 const {pool} = require('../db.js');
 
+//need a get replies...
+
 //add pagination and querying
-exports.getAllComments = async () =>{
+exports.getAllComments = async (query={}) =>{
     const conn = await pool.getConnection();
     try{
-        const rows = await conn.query('SELECT * FROM comments');
+        //would be good if we could get number of replies...
+        const values=[]
+        let sqlQ = `SELECT 
+        comments.id AS comment_id, comments.parent_id AS parent_id,
+        comments.user_id AS user_id, users.username AS username,
+        comments.text AS text, COALESCE(vote_sum.votes, 0) AS votes,
+        comments.posted_at AS posted_at
+        FROM comments
+        JOIN users ON comments.user_id=users.id
+        LEFT JOIN (
+            SELECT SUM(vote) AS votes, comment_id
+            FROM comment_votes GROUP BY comment_id
+            ) vote_sum ON comments.id = vote_sum.comment_id
+        WHERE 1=1
+        `
+
+        const rows = await conn.query(sqlQ);
         console.log('add pagination, query, make pretty...show vote count...')
         return rows;
     } finally {
