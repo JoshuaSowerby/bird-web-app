@@ -41,11 +41,11 @@ exports.getAllPosts = async (query={}) =>{
          sqlQ += ` AND ai_species IN (${placeholders})`;
         values.push(...speciesList);
     }
-    if (query.users){
-        const userList = Array.isArray(query.users) ? query.users : query.users.split(",");
-        const placeholders = userList.map(() => "?").join(","); 
-          sqlQ += ` AND ai_species IN (${placeholders})`;
-         values.push(...userList);
+    if (query.username){
+        const usernameList = Array.isArray(query.users) ? query.users : query.users.split(",");
+        const placeholders = usernameList.map(() => "?").join(","); 
+          sqlQ += ` AND username IN (${placeholders})`;
+         values.push(...usernameList);
     }
     //should add date query for before and after...
     if (query.voteLimit){

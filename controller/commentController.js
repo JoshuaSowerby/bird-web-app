@@ -10,10 +10,11 @@ exports.getAllComments= async (req, res)=>{
     // additional status codes too
     try {
         const post_id =req.params.post_id;
-        const result = await getAllComments(post_id);
+        const query = req.query
+        const result = await getAllComments(post_id,query);
         res.status(201).json({message:"success", result})
     } catch (error) {
-        res.status(500).json({ message:error.message})
+        res.status(error.status || 500).json({ message: error.message });
     }
 }
 

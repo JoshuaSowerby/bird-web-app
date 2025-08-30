@@ -21,8 +21,47 @@ exports.getAllComments = async (query={}) =>{
             ) vote_sum ON comments.id = vote_sum.comment_id
         WHERE 1=1
         `
+        //query builder
+        if (query.username){
+        const usernameList = Array.isArray(query.users) ? query.users : query.users.split(",");
+        const placeholders = usernameList.map(() => "?").join(","); 
+          sqlQ += ` AND username IN (${placeholders})`;
+         values.push(...usernameList);
+        }
+        //should add date query for before and after...
+        if (query.voteLimit){
+            const voteLimit = parseInt(query.voteLimit);
+            if (!isNaN(voteLimit)){
+                sqlQ += ` AND votes >= ?`;
+                values.push(voteLimit);
+            }
+        }
+        try {
+            if (query.sortBy){
+            let sortBy="";
+            switch(query.sortBy.toUpperCase()){
+                case 'VOTES':
+                    sortBy="votes";
+                    break;
+                case 'POSTED_AT':
+                    sortBy="posted_at";
+                    break;
+                default:
+                    sortBy="votes"
 
-        const rows = await conn.query(sqlQ);
+            }
+            if (query.order){
+                const order = query.order.toUpperCase();
+                if (order==='ASC'||order==="DESC"){
+                    sqlQ += ` ORDER BY ${sortBy} ${order}`;
+                }
+            }
+        }
+        } catch (error) {
+            console.log(error);
+        }
+
+        const rows = await conn.query(sqlQ, values);
         console.log('add pagination, query, make pretty...show vote count...')
         return rows;
     } finally {

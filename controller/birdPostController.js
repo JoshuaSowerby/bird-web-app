@@ -10,7 +10,7 @@ exports.getAllBirdPosts= async (req, res)=>{
     const query = req.query;
     try {
         const result = await getAllPosts(query);
-        res.status(201).json(result)
+        return res.status(201).json(result)
     } catch (error){
         res.status(500).json({ message:error.message});
     }
@@ -23,7 +23,7 @@ exports.getBirdPost= async (req, res)=>{
         const post = await getPostById(post_id);
         //add no post found check check FIX
         //assess visibility TODO
-        res.status(201).json(post);
+        return res.status(201).json(post);
     } catch (error){
         res.status(500).json({message: error.message});
     }
@@ -33,7 +33,7 @@ exports.getPostVotes = async (req, res) =>{
     try{// should add check for visibility/block TODO
         const post_id = req.params.post_id;
         const result = await getPostVotes(post_id);
-        res.status(201).json({message:"success", result}) 
+        return res.status(201).json({message:"success", result}) 
     } catch (error){
         res.status(500).json({ message:error.message})
     }
@@ -50,6 +50,13 @@ exports.postBirdPost= async (req, res)=>{
         const user_id = req.user_id; 
         const imgUUID = randomUUID();
 
+        if (!title || !image || !mimeType){
+            return res.status(400).json({message:'invalid body, use form-data with 1 text field "title" and 1 file field "image"'})
+        }
+
+        if (!mimeType.startsWith("image/")){
+            return res.status(400).json({message:'image must be valid image'})
+        }
         //upload img to bucket
         // TODO FIX create bucket if not exists in db.js
         try{
@@ -67,8 +74,7 @@ exports.postBirdPost= async (req, res)=>{
         } catch (err){
             //FIX if this fails the whole thing should cancel
             console.log(err);
-            res.status(500).json({err});
-            return //think this will early exit
+            return res.status(500).json({err});
         }
 
         console.log(imgUUID);
@@ -104,21 +110,15 @@ exports.postBirdPost= async (req, res)=>{
          *resulting in the update failing?
          */
         birdClassifier.on('close', (code)=>{
-            //hide this stuff, irrelevant error messages "xFormers is not available" doesn't matter
-            //res.json({ prediction: output.trim() })
-            // console.log(`out:${output}`);
-            // console.log(`code:${code}`);
-            // console.log("stderr:", errors.trim());
-            //res.status(200).json({message:output.trim()});
+
             output=output.trim();
             console.log(`post:${post_id}, predicted:${output}`)
             //update prediction
             updateBirdPrediction(post_id, output)
         });
-        //!!! FIX, add check for if valid..
         
     } catch (error) {
-        res.status(500).json({message:error.message});
+        res.status(500).json({message:error.message});///FIX
     }
     
 };
@@ -130,10 +130,17 @@ exports.voteOnBirdPost= async (req, res)=>{
         const post_id = req.params.post_id;
         const {vote} = req.body
         const result = await voteOnPost(user_id,post_id, vote)
+
+        if (!user_id || !post_id || !vote){
+            return res.status(400).json({message: 'missing fields, need at least "vote" field'})
+        }
+        if (![-1,0,1].includes(vote) ){
+            return res.status(400).json({message:'invalid value for "vote", has to be -1, 0, 1'})
+        }
         // FIX, add input val, and other statuses
-        res.status(201).json({message:"success"});
+        return res.status(201).json({message:"success"});
     } catch (error){
-        res.status(500).json({ message:error.message})
+        return res.status(500).json({ message:error.message})
     }
 }
 // DELETE POST
@@ -143,8 +150,8 @@ exports.deleteBirdPost= async (req, res)=>{
         const user_id = req.user_id;
         const post_id = req.params.post_id;
         const result =  await deletePostById(post_id, user_id);
-        res.status(201).json({message:'success', result});
+        return res.status(201).json({message:'success', result});
     } catch(error){
-        res.status(501).json({ message:"'deleteBirdPost' not yet implemented"})
+        return res.status(501).json({ message:error})//bad FIX
     }
 }
