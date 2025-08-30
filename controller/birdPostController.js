@@ -81,7 +81,7 @@ exports.postBirdPost= async (req, res)=>{
         // FIX TO USE .env
         const model='model.py';// FIX this stuff should be in its own file really...
         const head_weights='weights.pth'
-        const dinoV2_weights='dinov2_vits14_pretrain.pth'
+        //const dinoV2_weights='dinov2_vits14_pretrain.pth'
 
         let output ="";
         let errors ="";
@@ -92,7 +92,7 @@ exports.postBirdPost= async (req, res)=>{
         res.status(201).json({message:'success', post_id:result});
 
 
-        const birdClassifier= spawn('python3', ["-u",model,head_weights,dinoV2_weights]);
+        const birdClassifier= spawn('python3', ["-u",model,head_weights]);//,dinoV2_weights]);
         console.log(`spawning python`)
         birdClassifier.stdin.write(image);// --
         birdClassifier.stdin.end();//--

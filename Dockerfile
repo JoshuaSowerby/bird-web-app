@@ -8,7 +8,7 @@ RUN npm i
 # and put the second RUN for pip into the first to save on disk space
 RUN apt-get update && apt-get install -y python3 python3-venv python3-pip \
     && python3 -m venv /opt/venv \
-    && /opt/venv/bin/pip install --no-cache-dir numpy Pillow torch torchvision --index-url https://download.pytorch.org/whl/cpu
+    && /opt/venv/bin/pip install --no-cache-dir numpy Pillow timm torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
 ENV PATH="/opt/venv/bin:$PATH"
 EXPOSE 3000
