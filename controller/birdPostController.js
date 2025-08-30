@@ -88,7 +88,7 @@ exports.postBirdPost= async (req, res)=>{
 
         const birdClassifier= spawn('python3', ["-u",model,head_weights,dinoV2_weights]);
         console.log(`spawning python`)
-        birdClassifier.stdin.write(req.file.buffer);// --
+        birdClassifier.stdin.write(image);// --
         birdClassifier.stdin.end();//--
 
         birdClassifier.stdout.on('data', (data)=>{
@@ -96,6 +96,7 @@ exports.postBirdPost= async (req, res)=>{
         });
         birdClassifier.stderr.on("data", (data) => {
             errors += data.toString();
+            console.error('python stderr:', data.toString());
         });
         
         /*FIX potential issue, i don't think it can ever happen
