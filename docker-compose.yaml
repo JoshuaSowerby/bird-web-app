@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   app:
-    image: bird-web-app
+    image: 901444280953.dkr.ecr.ap-southeast-2.amazonaws.com/bird-web-app:ass1-bird-web-app
     env_file:
       - .env
     ports:

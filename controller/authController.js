@@ -52,6 +52,9 @@ exports.loginUser = async (req, res) => {
         const result = await conn.query(`
             SELECT id, pw_hash FROM users WHERE email = ?`,
             [email]);
+        if (!result[0]){
+            return res.status(401).json({message: 'invalid credentials'})
+        }
         if (await bcrypt.compare(password, result[0].pw_hash)){
             const token=generateToken(result[0].id)
             return res.status(201).json({message:'login successful', token})
