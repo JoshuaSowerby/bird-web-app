@@ -23,17 +23,15 @@ exports.getAllComments = async (query={}) =>{
         `
         //query builder
         if (query.username){
-            const usernameList = Array.isArray(query.users) ? query.users : query.users.split(",");
-            const placeholders = usernameList.map(() => "?").join(","); 
-            sqlQ += ` AND username IN (${placeholders})`;
-            values.push(...usernameList);
+            sqlQ+=` AND text LIKE ?`
+            values.push(`%${query.username}%`)
         }
         if (query.parent_id && !isNaN(query.parent_id) && query.parent_id>0){
             sqlQ+= ` AND parent_id = ?`
             values.push(query.parent_id);
         }
         if (query.text){
-            sql+=` AND text LIKE ?`
+            sqlQ+=` AND text LIKE ?`
             values.push(`%${query.text}%`)
         }
         //should add date query for before and after...

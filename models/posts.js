@@ -42,14 +42,12 @@ exports.getAllPosts = async (query={}) =>{
         values.push(...speciesList);
     }
     if (query.title){
-        sql+=` AND title LIKE ?`
+        sqlQ+=` AND title LIKE ?`
         values.push(`%${query.title}%`)
     }
     if (query.username){
-        const usernameList = Array.isArray(query.users) ? query.users : query.users.split(",");
-        const placeholders = usernameList.map(() => "?").join(","); 
-          sqlQ += ` AND username IN (${placeholders})`;
-         values.push(...usernameList);
+        sqlQ+=` AND title LIKE ?`
+        values.push(`%${query.username}%`)
     }
     //should add date query for before and after...
     if (query.voteLimit){
