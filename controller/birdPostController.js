@@ -137,7 +137,7 @@ exports.voteOnBirdPost= async (req, res)=>{
         if (!user_id || !post_id || !vote){
             return res.status(400).json({message: 'missing fields, need at least "vote" field'})
         }
-        if (![-1,0,1].includes(vote) ){
+        if (![-1,0,1].includes(Number(vote)) ){
             return res.status(400).json({message:'invalid value for "vote", has to be -1, 0, 1'})
         }
         // FIX, add input val, and other statuses
