@@ -41,6 +41,10 @@ exports.getAllPosts = async (query={}) =>{
          sqlQ += ` AND ai_species IN (${placeholders})`;
         values.push(...speciesList);
     }
+    if (query.title){
+        sql+=` AND title LIKE ?`
+        values.push(`%${query.title}%`)
+    }
     if (query.username){
         const usernameList = Array.isArray(query.users) ? query.users : query.users.split(",");
         const placeholders = usernameList.map(() => "?").join(","); 

@@ -23,6 +23,9 @@ exports.getComment= async (req, res)=>{
     try {
         const comment_id =req.params.comment_id;
         const result = await getCommentById(comment_id);
+        if (!comment_id){
+            return res.status(404)
+        }
         res.status(201).json({message:"success", result})
     } catch (error) {
         res.status(500).json({ message:error.message})

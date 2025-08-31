@@ -19,6 +19,11 @@ exports.registerUser = async (req, res) => {
     }
     const conn = await pool.getConnection();
     const pw_hash = await bcrypt.hash(password,12);
+    const emailTaken= await conn.query(`
+        SELECT email FROM users WHERE email = ?`,[email])
+    if (emailTaken.length>0){
+        return res.status(401).json({message:'email in use'})
+    }
     try {
         const result =await conn.query(`
             INSERT INTO users (username, email, pw_hash)

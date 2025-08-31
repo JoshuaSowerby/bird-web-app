@@ -23,6 +23,9 @@ exports.getBirdPost= async (req, res)=>{
         const post = await getPostById(post_id);
         //add no post found check check FIX
         //assess visibility TODO
+        if (!post){
+            return res.status(404)
+        }
         return res.status(201).json(post);
     } catch (error){
         res.status(500).json({message: error.message});
