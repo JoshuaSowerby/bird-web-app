@@ -1,3 +1,72 @@
+# A2 todo
+---
+alot of this is AWS side...
+# DATABASE
+- all instances of client need to be wrapped in try{...}finally{client.release()}
+
+# CPU intensive (statelessness)
+- move the classification to a queue (AWS SQS) so that if it looses its state we dont get a bunch of incomplete things
+- a separate docker container would likely deal with the queue.
+# Services
+- move Maria to the managed postgres **<--- do this first**
+- ~~replace `ON DUPLICATE KEY UPDATE` with ` ON CONFLICT` ...~~ you will have to do this on case by case basis, im not putting the full thing here
+- ~~replace `result.affectedRows` with `result.rowCount`~~
+    - `getAllPosts` `getAllComments` need to be fixed
+    - all the returns will be broken
+        - ~~replace `result` with `result.rows`~~
+            - there are some unclear cases, will need to test more
+        - ~~`.insertId` needs to be replaced with `RETURNING id` added to query then `result.rows[0].id`~~
+    - ~~`client.query()` returns `{ rows: [...] }`~~ replaced, needs to be tested
+        - change all `results` that match this to accommodate
+    - ~~postgres uses snake_case for tables and unless you "" them they will go to lower case.~~
+    - fix the query builder, especially its use of `?`
+    - FIXED..~~`.insertId` is not available, instead do like:~~
+    ```
+    const result = await client.query(
+    `INSERT INTO users (username, email, pw_hash)
+    VALUES ($1, $2, $3)
+    RETURNING id;`,
+    [username, email, pw_hash]
+    );
+
+    const user_id = result.rows[0].id;
+    ```
+    - change the following:
+        - 
+        - ~~`imgUUID` -> `img_uuid`~~
+            - I just replaced all, don't think it will mess up.
+        - ~~`await pool.getConnection()` -> `await pool.connect()`~~
+        - ~~`conn` -> `client`~~
+        -~~`LIKE` -> `ILIKE`~~
+        - ~~`?` -> `$1` or `$2` etc ALSO the thing we use to generate them in the query builders~~
+    - ~~fix queries to be like `await client.query('INSERT INTO users(name) VALUES($1)', ['Alice']);`~~
+- implement cognito
+	- federated login
+	- MFA
+	- maybe admin role (they can delete anything etc)
+- implement the secret store
+# presigned
+- fix the current presigend to not create a new one every time, put it in its own table
+- should we be able to upload via one too?
+# Set up route 53
+- self explanatory
+
+# Additional
+
+## IaC
+
+## Caching?
+- could cache top filter, things like that
+- should add pagination would help out with this, then could cache first page etc
+
+## additional service
+- move votes to dynamo or the like.
+
+
+---
+# A1 todo
+---
+
 # Core
 - ## 80% cpu for 5 minutes
     - If img classifier doesn't then increase input size

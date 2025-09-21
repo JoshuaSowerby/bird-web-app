@@ -1,4 +1,6 @@
-const mariadb = require('mariadb');
+//const mariadb = require('mariadb');
+const {Pool} = require('pg');
+
 const S3 = require("@aws-sdk/client-s3");
 
 const s3Client = new S3.S3Client({ region: process.env.REGION });
@@ -53,19 +55,22 @@ const s3Client = new S3.S3Client({ region: process.env.REGION });
     
 })();
 
-const pool = mariadb.createPool({
+//TODO, get these from param and secret store
+const pool = new Pool({
     host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'user',
-    password: process.env.DB_PASSWORD || 'pass',
-    database: process.env.DB_name || 'birddb',
-    connectionLimit: 5, //should I increase this?
+    port: process.env.DB_PORT || 5432,
+    user: process.env.POSTGRES_USER || 'user',
+    password: process.env.POSTGRES_PASSWORD || 'pass',
+    database: process.env.POSTGRES_DB || 'birddb',
+    //connectionLimit: 5
 });
+
 
 // Init logic
 ( async () =>{
-    let conn;
+    let client;
     try{
-        conn = await pool.getConnection();
+        client = await pool.connect();
         console.log('connected');
         //tables
         const tables = [
@@ -74,8 +79,8 @@ const pool = mariadb.createPool({
             - also it should be the hash of the password
             */
             CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                # public_id#should add this, and then change jwt to use it instead,
+                id SERIAL PRIMARY KEY,
+                -- public_id -- should add this, and then change jwt to use it instead,
                 username VARCHAR(25) NOT NULL,
                 email VARCHAR(255) NOT NULL UNIQUE,
                 pw_hash VARCHAR(60) NOT NULL
@@ -85,11 +90,11 @@ const pool = mariadb.createPool({
               and allow others to vote on them so we can update the model later
             */
             CREATE TABLE IF NOT EXISTS posts (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 user_id INT NOT NULL,
-                imgUUID VARCHAR(255) NOT NULL UNIQUE, #FIX switch to imgUUID
+                img_uuid VARCHAR(255) NOT NULL UNIQUE, 
                 title VARCHAR(255) NOT NULL,
-                /* votes INT DEFAULT 0,# has its own table */
+                /* votes INT DEFAULT 0, -- has its own table */
                 ai_species VARCHAR(255),
                 posted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -98,12 +103,12 @@ const pool = mariadb.createPool({
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             );`,
             `CREATE TABLE IF NOT EXISTS comments (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 user_id INT NOT NULL,
                 post_id INT NOT NULL,
                 parent_id INT NULL,
                 text VARCHAR(255) NOT NULL,
-                /* votes INT DEFAULT 0,# has its own table */
+                /* votes INT DEFAULT 0, -- has its own table */
                 posted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
@@ -135,12 +140,14 @@ const pool = mariadb.createPool({
             */`,
         ]
 
-        for (const table of tables){ await conn.query(table)};
+        await client.query('BEGIN');
+        for (const table of tables){ await client.query(table)};
+        await client.query('COMMIT')
     } catch (err) {
         console.error('DB init failed:',err.message);
     } finally {
-        if (conn){
-            conn.release();
+        if (client){
+            client.release();
             console.log('connection released');
         }
     }

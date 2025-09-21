@@ -1,0 +1,11 @@
+classifier = import model.py
+
+img_uuid=get_next_in_queue()
+img= s3.get(img_uuid)
+
+classification=classifier.classify(img)
+
+client.query("SET ai_species = $1  FROM POST WHERE img_uuid = $2",[img_uuid, classification])
+
+if success:
+    remove_from_queue

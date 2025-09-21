@@ -51,7 +51,7 @@ exports.postBirdPost= async (req, res)=>{
         const image = req.file.buffer//---Ai
         const mimeType = req.file.mimetype;//--Ai
         const user_id = req.user_id; 
-        const imgUUID = randomUUID();
+        const img_uuid = randomUUID();
 
         if (!title || !image || !mimeType){
             return res.status(400).json({message:'invalid body, use form-data with 1 text field "title" and 1 file field "image"'})
@@ -66,7 +66,7 @@ exports.postBirdPost= async (req, res)=>{
             const response = await s3Client.send(
                 new S3.PutObjectCommand({
                 Bucket: process.env.BUCKET,
-                Key: imgUUID,
+                Key: img_uuid,
                 Body: image,
                 ContentType: mimeType
                 })
@@ -80,17 +80,17 @@ exports.postBirdPost= async (req, res)=>{
             return res.status(500).json({err});
         }
 
-        console.log(imgUUID);
+        console.log(img_uuid);
         // FIX TO USE .env
-        const model='model.py';// FIX this stuff should be in its own file really...
-        const head_weights='weights.pth'
+        const model='classifier/model.py';// FIX this stuff should be in its own file really...
+        const head_weights='classifier/weights.pth'
         //const dinoV2_weights='dinov2_vits14_pretrain.pth'
 
         let output ="";
         let errors ="";
 
         // the img classification comes second, then updates afterwards
-        const result= await createPost(user_id, imgUUID, title, output, 'visible');//imgUUID
+        const result= await createPost(user_id, img_uuid, title, output, 'visible');//img_uuid
         const post_id= result;
         res.status(201).json({message:'success', post_id:result});
 

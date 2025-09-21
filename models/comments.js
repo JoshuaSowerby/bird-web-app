@@ -4,7 +4,7 @@ const {pool} = require('../db.js');
 
 //add pagination and querying
 exports.getAllComments = async (query={}) =>{
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try{
         //would be good if we could get number of replies...
         const values=[]
@@ -21,24 +21,25 @@ exports.getAllComments = async (query={}) =>{
             ) vote_sum ON comments.id = vote_sum.comment_id
         WHERE 1=1
         `
+        let count=1;
         //query builder
         if (query.username){
-            sqlQ+=` AND text LIKE ?`
+            sqlQ+=` AND username ILIKE $${count++}`
             values.push(`%${query.username}%`)
         }
         if (query.parent_id && !isNaN(query.parent_id) && query.parent_id>0){
-            sqlQ+= ` AND parent_id = ?`
+            sqlQ+= ` AND parent_id = $${count++}`
             values.push(query.parent_id);
         }
         if (query.text){
-            sqlQ+=` AND text LIKE ?`
+            sqlQ+=` AND text ILIKE $${count++}`
             values.push(`%${query.text}%`)
         }
         //should add date query for before and after...
         if (query.voteLimit){
             const voteLimit = parseInt(query.voteLimit);
             if (!isNaN(voteLimit)){
-                sqlQ += ` AND votes >= ?`;
+                sqlQ += ` AND COALESCE(vote_sum.votes, 0) >= $${count++}`;
                 values.push(voteLimit);
             }
         }
@@ -67,78 +68,80 @@ exports.getAllComments = async (query={}) =>{
             console.log(error);
         }
 
-        const rows = await conn.query(sqlQ, values);
+        const result = await client.query(sqlQ, values);
         console.log('add pagination, query, make pretty...show vote count...')
-        return rows;
+        return result.rows;
     } finally {
-        conn.release();
+        client.release();
     };
 };
 
 exports.getCommentById = async(id) =>{
-    const conn = await pool.getConnection();
-    const rows = await conn.query('SELECT * FROM comments WHERE id = ?',[id]);
-    conn.release();
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM comments WHERE id = $1',[id]);
+    client.release();
     console.log('show vote count...')
-    return rows[0];
+    return result.rows[0];
 };
 
 //TEST to see if the parent_id if/else works
 exports.createComment = async (user_id, post_id, text, parent_id) => {
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try{
         let result;
         if (parent_id){
-            result = await conn.query(`
+            result = await client.query(`
                 INSERT INTO comments ( user_id, post_id, text, parent_id)
-                VALUES (?, ?, ?, ?)`,[user_id, post_id, text, parent_id]);
+                VALUES ($1, $2, $3, $4)
+                RETURNING id`,[user_id, post_id, text, parent_id]);
         } else{
-            result = await conn.query(`
+            result = await client.query(`
                 INSERT INTO comments ( user_id, post_id, text)
-                VALUES (?, ?, ?)`,[user_id, post_id, text]);
+                VALUES ($1, $2, $3)
+                RETURNING id`,[user_id, post_id, text]);
         }
-        const comment_id = Number(result.insertId)
+        const comment_id = result.rows[0].id;
         return comment_id;
-    } finally{conn.release()};
+    } finally{client.release()};
 };
 
 // update
 exports.updateCommentById = async (comment_id, user_id,text)=>{
-    const conn = await pool.getConnection();
-    const result= await conn.query(`
+    const client = await pool.connect();
+    const result= await client.query(`
         UPDATE comments
-        SET text = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ? AND user_id =?`, [text, comment_id, user_id]
+        SET text = $1, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2 AND user_id =$3`, [text, comment_id, user_id]
     );
-    conn.release();
-    return { updated: result.affectedRows > 0};
+    client.release();
+    return { updated: result.rowCount > 0};
 };
 
 // delete
 exports.deleteCommentById = async(comment_id, user_id) =>{
-    const conn = await pool.getConnection();
-    const result  = await conn.query('DELETE FROM comments WHERE id = ? AND user_id =?',[comment_id, user_id]);
-    conn.release();
-    return { deleted: result.affectedRows > 0 };
+    const client = await pool.connect();
+    const result  = await client.query('DELETE FROM comments WHERE id = $1 AND user_id =$2',[comment_id, user_id]);
+    client.release();
+    return { deleted: result.rowCount > 0 };
 };
 
 //vote
 exports.voteOnComment = async (user_id, comment_id, vote)=>{
-    const conn = await pool.getConnection();
-    const result = await conn.query(`
+    const client = await pool.connect();
+    const result = await client.query(`
         INSERT INTO comment_votes (user_id, comment_id, vote)
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            vote = VALUES(vote)`,[user_id, comment_id, vote]
+        VALUES ($1, $2, $3)
+        ON CONFLICT (user_id, comment_id) DO UPDATE
+            SET vote = EXCLUDED.vote`,[user_id, comment_id, vote]
     );
-    conn.release();
-    return result.affectedRows>0;
+    client.release();
+    return result.rowCount>0;
 };
 
 exports.getCommentVotes = async (comment_id)=>{
-    const conn = await pool.getConnection();
-    const result = await conn.query(`
-        SELECT SUM(vote) FROM comment_votes WHERE comment_id=?`,[comment_id]);
-    conn.release();
-    return result; //check format, may need to be result[0]
+    const client = await pool.connect();
+    const result = await client.query(`
+        SELECT SUM(vote) FROM comment_votes WHERE comment_id=$1`,[comment_id]);
+    client.release();
+    return result.rows; //check format
 }

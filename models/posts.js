@@ -14,14 +14,14 @@ try {
 
 //add pagination and querying
 exports.getAllPosts = async (query={}) =>{
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     //let sqlQ=`SELECT * FROM posts WHERE 1=1`//-- WHERE 1=1 is ai
     
     //-- ai did coalesce and suggested LEFT JOIN instead of JOIN
     const values=[]
     let sqlQ = `SELECT 
     posts.id AS post_id, posts.user_id AS user_id,
-    users.username AS username, posts.imgUUID AS imgUUID,
+    users.username AS username, posts.img_uuid AS img_uuid,
     posts.title AS title, posts.ai_species as ai_species,
     COALESCE(vote_sum.votes, 0) AS votes,
     posts.posted_at AS posted_at
@@ -33,27 +33,27 @@ exports.getAllPosts = async (query={}) =>{
         ) vote_sum ON posts.id = vote_sum.post_id
     WHERE 1=1
     `
-    
+    let count = 1;
     //query builder
     if (query.ai_species) {//-- ai generated species filter
          const speciesList = Array.isArray(query.ai_species) ? query.ai_species : query.ai_species.split(",");
-         const placeholders = speciesList.map(() => "?").join(","); 
+         const placeholders = speciesList.map(() => `$${count++}`).join(","); 
          sqlQ += ` AND ai_species IN (${placeholders})`;
         values.push(...speciesList);
     }
     if (query.title){
-        sqlQ+=` AND title LIKE ?`
+        sqlQ+=` AND title ILIKE $${count++}`
         values.push(`%${query.title}%`)
     }
     if (query.username){
-        sqlQ+=` AND title LIKE ?`
+        sqlQ+=` AND username ILIKE $${count++}`
         values.push(`%${query.username}%`)
     }
     //should add date query for before and after...
     if (query.voteLimit){
         const voteLimit = parseInt(query.voteLimit);
         if (!isNaN(voteLimit)){
-            sqlQ += ` AND votes >= ?`;
+            sqlQ += ` AND COALESCE(vote_sum.votes, 0) >= $${count++}`;
             values.push(voteLimit);
         }
     }
@@ -82,17 +82,18 @@ exports.getAllPosts = async (query={}) =>{
         console.log(error);
     }
     
-    const rows = await conn.query(sqlQ,values);
-    conn.release();
-    console.log('replace imgUUID with presigned link, paginate, filter, link votes somehow')
+    const result = await client.query(sqlQ,values);
+    client.release();
+    console.log('replace img_uuid with presigned link, paginate, filter, link votes somehow')
     //TODO FIX IMPORTANT
-    // in rows remove imgUUID and replace with presigned URL\
+    // in rows remove img_uuid and replace with presigned URL\
     
     const updatedRows = await Promise.all( //-- ai gen from pervious iteration
-        rows.map(async row => {
-            const presignedURL = await getPresignedURL(row.imgUUID);
+        result.rows.map(async row => {
+            console.log(`CACHE THIS url, or just ave to db, FIX`)
+            const presignedURL = await getPresignedURL(row.img_uuid);
             row.imgURL = presignedURL;
-            delete row.imgUUID;
+            delete row.img_uuid;
             return row;
         })
     );
@@ -102,42 +103,43 @@ exports.getAllPosts = async (query={}) =>{
 
 //TODO show votes in this get
 exports.getPostById = async(id) =>{
-    const conn = await pool.getConnection();
-    const rows = await conn.query('SELECT * FROM posts WHERE id = ?',[id]);
-    conn.release();
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM posts WHERE id = $1',[id]);
+    client.release();
     // removing uuid and adding presigned link
-    const post = rows[0]
-    const presignedURL = await getPresignedURL(post.imgUUID);
+    const post = result.rows[0]
+    const presignedURL = await getPresignedURL(post.img_uuid);
     post.imgURL= presignedURL
-    delete post.imgUUID;
-    return rows[0];
+    delete post.img_uuid;
+    return result.rows[0];
 };
 
-//FIX switch to imgUUID
-exports.createPost = async (user_id, imgUUID, title, ai_species, visibility='visible') => {
+//FIX switch to img_uuid
+exports.createPost = async (user_id, img_uuid, title, ai_species, visibility='visible') => {
     if (!ai_species){
         ai_species='pending';
     }
-    const conn = await pool.getConnection();
-    const result = await conn.query(`
-        INSERT INTO posts ( user_id, imgUUID, title, ai_species, visibility
-        ) VALUES (?, ?, ?, ?, ?)`,[user_id, imgUUID, title, ai_species, visibility]);
-    conn.release();
-    const post_id = Number(result.insertId)
+    const client = await pool.connect();
+    const result = await client.query(`
+        INSERT INTO posts ( user_id, img_uuid, title, ai_species, visibility
+        ) VALUES ($1,$2,$3, $4, $5)
+         RETURNING id`,[user_id, img_uuid, title, ai_species, visibility]);
+    client.release();
+    const post_id = result.rows[0].id
     return post_id;///check
 }
 
 exports.updateBirdPrediction = async (post_id, prediction) =>{
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try{
-        const result = await conn.query(`
+        const result = await client.query(`
                 UPDATE posts
-                SET ai_species = ?
-                WHERE id = ?`, [prediction, post_id]);
+                SET ai_species = $1
+                WHERE id = $2`, [prediction, post_id]);
     } catch (error){
         console.error(error);
     }finally{
-        conn.release();
+        client.release();
     }
     
 }
@@ -146,59 +148,59 @@ exports.updateBirdPrediction = async (post_id, prediction) =>{
 //is there a better way to do this? probably joining strings...
 //FIX, please, this is bad
 exports.updatePostById = async (id,visibility,title)=>{
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     let visResult;
     let titleResult;
     if (visibility){
-        visResult= await conn.query(`
+        visResult= await client.query(`
             UPDATE posts
-            SET visibility =?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?`, [visibility, id])
+            SET visibility =$1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2`, [visibility, id])
     } else {
-        visResult = {affectedRows:-1};
+        visResult = {rowCount:-1};
     }
 
     if (title){
-        titleResult= await conn.query(`
+        titleResult= await client.query(`
             UPDATE posts
-            SET title =?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?`, [title, id])
+            SET title =$1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2`, [title, id])
     } else {
-        titleResult = {affectedRows:-1};
+        titleResult = {rowCount:-1};
     }
-    conn.release();
+    client.release();
     return {
-        visUpdated: visResult.affectedRows > 0,
-        titleUpdated: titleResult.affectedRows > 0}
+        visUpdated: visResult.rowCount > 0,
+        titleUpdated: titleResult.rowCount > 0}
 };
 
 // delete
 exports.deletePostById = async(post_id, user_id) =>{
-    const conn = await pool.getConnection();
-    const result  = await conn.query(
+    const client = await pool.connect();
+    const result  = await client.query(
         `DELETE FROM posts
-        WHERE id = ? AND user_id =?`,[post_id, user_id]);
-    conn.release();
-    return { deleted: result.affectedRows > 0 };
+        WHERE id = $1 AND user_id =$2`,[post_id, user_id]);
+    client.release();
+    return { deleted: result.rowCounts > 0 };
 };
 
 //vote
 exports.voteOnPost = async (user_id, post_id, vote)=>{
-    const conn = await pool.getConnection();
-    const result = await conn.query(`
+    const client = await pool.connect();
+    const result = await client.query(`
         INSERT INTO post_votes (user_id, post_id, vote)
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            vote = VALUES(vote)`,[user_id, post_id, vote]
+        VALUES ($1,$2,$3)
+        ON CONFLICT (user_id, post_id) DO UPDATE
+            SET vote = EXCLUDED.vote`,[user_id, post_id, vote]
     );
-    conn.release();
-    return result;
+    client.release();
+    return result;//unused
 };
 
 exports.getPostVotes = async (post_id)=>{
-    const conn = await pool.getConnection();
-    const result = await conn.query(`
-        SELECT SUM(vote) FROM post_votes WHERE post_id=?`,[post_id]);
-    conn.release();
-    return result; //check format, may need to be result[0]
+    const client = await pool.connect();
+    const result = await client.query(`
+        SELECT SUM(vote) FROM post_votes WHERE post_id=$1`,[post_id]);
+    client.release();
+    return result.rows; //check format, may need to be result[0]
 }
