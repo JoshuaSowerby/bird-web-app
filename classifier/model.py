@@ -81,7 +81,7 @@ class birdClassifier():
         #The model
 
         #headPath=r"weights.pth"#FIX to use sys.argv[1 or 2]...also in what calls this file...
-        headPath=sys.argv[1]#check
+        headPath='./weights.pth'#sys.argv[1]#check
         #backendPath=sys.argv[2]#r""
         #self.dinoV2=torch.hub.load('facebookresearch/dinov2','dinov2_vits14', pretrained=False,verbose=False)#,pretrained=False)#if it doesn't work, then load_state_dict
         self.vit_tiny= timm.create_model('vit_tiny_patch16_224.augreg_in21k', pretrained=True, num_classes=0)
@@ -92,7 +92,8 @@ class birdClassifier():
         self.model.load_state_dict(torch.load(headPath,map_location='cpu'))
         self.model.eval()
 
-    def classifyImg(self, image):
+    def classifyImg(self, img_bytes):
+        image = Image.open(io.BytesIO(img_bytes))
         image = image.convert('RGB')#ensure it is jpg
         input=self.val_transform(image).unsqueeze(0)#adds fake batch dim
         features=self.vit_tiny(input)
@@ -103,7 +104,7 @@ class birdClassifier():
         return predicted_bird
 
 
-
+'''
 ##FIX replace img_path with actual image... imgURL
 if __name__ == "__main__":
      model=birdClassifier()
@@ -111,3 +112,4 @@ if __name__ == "__main__":
      img_bytes= sys.stdin.buffer.read()# --
      img=Image.open(io.BytesIO(img_bytes)) # --
      print(model.classifyImg(img), flush=True)
+'''

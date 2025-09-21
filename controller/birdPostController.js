@@ -1,7 +1,8 @@
-const { spawn } = require("child_process");
+// const { spawn } = require("child_process");
 const { getAllPosts, createPost, getPostById, deletePostById, getPostVotes, updateBirdPrediction, voteOnPost } = require("../models/posts");
 S3 = require("@aws-sdk/client-s3");
 const {s3Client} = require('../db.js')
+const SQS = require("@aws-sdk/client-sqs");
 const { randomUUID } = require('node:crypto');
 
 // GET POST
@@ -92,9 +93,21 @@ exports.postBirdPost= async (req, res)=>{
         // the img classification comes second, then updates afterwards
         const result= await createPost(user_id, img_uuid, title, output, 'visible');//img_uuid
         const post_id= result;
-        res.status(201).json({message:'success', post_id:result});
+        res.status(201).json({message:'success', post_id:post_id});
 
+        //add img to queue
+        const client = new SQS.SQSClient({
+            region: "ap-southeast-2",
+        });
+        const sqsResponse= await client.send(
+            new SQS.SendMessageCommand({
+                QueueUrl: process.env.SQS_URL,
+                MessageBody:img_uuid
+            })
+        );
+        console.log("Sending to SQS", sqsResponse);
 
+        /* Old .spawn
         const birdClassifier= spawn('python3', ["-u",model,head_weights]);//,dinoV2_weights]);
         console.log(`spawning python`)
         birdClassifier.stdin.write(image);// --
@@ -108,10 +121,9 @@ exports.postBirdPost= async (req, res)=>{
             console.error('python stderr:', data.toString());
         });
         
-        /*FIX potential issue, i don't think it can ever happen
-         *but technically couldn't the model finish before the res
-         *resulting in the update failing?
-         */
+        //FIX potential issue, i don't think it can ever happen
+        //but technically couldn't the model finish before the res
+        //resulting in the update failing?
         birdClassifier.on('close', (code)=>{
 
             output=output.trim();
@@ -119,6 +131,7 @@ exports.postBirdPost= async (req, res)=>{
             //update prediction
             updateBirdPrediction(post_id, output)
         });
+    */
         
     } catch (error) {
         res.status(500).json({message:error.message});///FIX

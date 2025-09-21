@@ -1,11 +1,84 @@
-classifier = import model.py
+import os
 
-img_uuid=get_next_in_queue()
-img= s3.get(img_uuid)
+import psycopg2
 
-classification=classifier.classify(img)
+import boto3
+#from botocore.exceptions import ClientError
 
-client.query("SET ai_species = $1  FROM POST WHERE img_uuid = $2",[img_uuid, classification])
+from model import birdClassifier
 
-if success:
-    remove_from_queue
+# .env vars
+REGION=os.environ['REGION']
+
+SQS_URL=os.environ['SQS_URL']
+
+BUCKET=os.environ['BUCKET']
+
+POSTGRES_USER=os.environ['POSTGRES_USER']
+POSTGRES_PASSWORD=os.environ['POSTGRES_PASSWORD']
+POSTGRES_DB=os.environ['POSTGRES_DB']
+DB_HOST=os.environ['DB_HOST']
+DB_PORT=os.environ['DB_PORT']
+
+
+if __name__ == "__main__":
+    #connect to db
+    #classifier = Classifier()
+    conn = psycopg2.connect(
+        host=DB_HOST,
+        dbname=POSTGRES_DB,
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD,
+        port=DB_PORT
+    )
+    cur = conn.cursor()
+    print('connected to pg!')
+    
+    s3_client = boto3.client('s3', region_name=REGION)
+    sqs_client = boto3.client("sqs", region_name=REGION)
+    
+    classifier=birdClassifier()
+    while True:
+        try:
+            receive_response = sqs_client.receive_message(
+                QueueUrl=SQS_URL,
+                MaxNumberOfMessages=1,
+                WaitTimeSeconds=20,#fix
+                VisibilityTimeout=300#fix
+            )
+            messages = receive_response.get("Messages")
+            if messages:
+                img_uuid=messages[0]["Body"]
+                response = s3_client.get_object(Bucket=BUCKET, Key=img_uuid)
+                img_bytes = response['Body'].read()
+                
+                ai_species=classifier.classifyImg(img_bytes)
+                
+                cur.execute(
+                    "UPDATE posts"
+                    " SET ai_species = %s"
+                    " WHERE img_uuid = %s;", (ai_species, img_uuid))
+                conn.commit()
+                #cur.close()
+                #conn.close()
+
+                delete_response = sqs_client.delete_message(
+                    QueueUrl=SQS_URL,
+                    ReceiptHandle=messages[0]["ReceiptHandle"]
+                )
+                print("Deleting the message", delete_response)
+        except psycopg2.Error as e:
+            print(f'pg error:\n{e}\ntrying to reconnect to pg')
+            conn = psycopg2.connect(
+            host=DB_HOST,
+            dbname=POSTGRES_DB,
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD,
+            port=DB_PORT
+            )
+            cur = conn.cursor()
+            print('connected to pg!')
+        except Exception as e:
+            print(f"loop broke\n{e}")
+
+
