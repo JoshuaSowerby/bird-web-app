@@ -7,6 +7,7 @@ alot of this is AWS side...
 # CPU intensive (statelessness)
 - move the classification to a queue (AWS SQS) so that if it looses its state we dont get a bunch of incomplete things
 - a separate docker container would likely deal with the queue.
+- please test
 # Services
 - move Maria to the managed postgres **<--- do this first**
 - ~~replace `ON DUPLICATE KEY UPDATE` with ` ON CONFLICT` ...~~ you will have to do this on case by case basis, im not putting the full thing here
