@@ -1,0 +1,17 @@
+FROM node:22-slim
+WORKDIR /app
+COPY ./controller ./controller
+COPY ./middleware ./middleware
+COPY ./models ./models
+COPY ./router ./router
+COPY ./utils ./utils
+COPY ./db.js .
+COPY ./index.js .
+COPY ./package-lock.json .
+COPY ./package.json .
+
+RUN npm i
+
+EXPOSE 3000
+
+CMD ["node", "index.js"]
