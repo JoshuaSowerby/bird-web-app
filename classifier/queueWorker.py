@@ -39,6 +39,7 @@ if __name__ == "__main__":
     
     classifier=birdClassifier()
     while True:
+        ## if the SQS message is invalid we should delete or ignore it?
         try:
             receive_response = sqs_client.receive_message(
                 QueueUrl=SQS_URL,
@@ -49,10 +50,12 @@ if __name__ == "__main__":
             messages = receive_response.get("Messages")
             if messages:
                 img_uuid=messages[0]["Body"]
+                print(f"Received:{img_uuid}")
                 response = s3_client.get_object(Bucket=BUCKET, Key=img_uuid)
                 img_bytes = response['Body'].read()
                 
                 ai_species=classifier.classifyImg(img_bytes)
+                print(f"ai_species:{ai_species}")
                 
                 cur.execute(
                     "UPDATE posts"
@@ -61,6 +64,8 @@ if __name__ == "__main__":
                 conn.commit()
                 #cur.close()
                 #conn.close()
+                print("Committed")
+
 
                 delete_response = sqs_client.delete_message(
                     QueueUrl=SQS_URL,
