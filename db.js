@@ -62,6 +62,7 @@ const pool = new Pool({
     user: process.env.POSTGRES_USER || 'user',
     password: process.env.POSTGRES_PASSWORD || 'pass',
     database: process.env.POSTGRES_DB || 'birddb',
+    ssl: { rejectUnauthorized: true }//AWS only, bad hardcoded FIX
     //connectionLimit: 5
 });
 

@@ -19,7 +19,7 @@ POSTGRES_PASSWORD=os.environ['POSTGRES_PASSWORD']
 POSTGRES_DB=os.environ['POSTGRES_DB']
 DB_HOST=os.environ['DB_HOST']
 DB_PORT=os.environ['DB_PORT']
-
+DB_SSLMODE=os.environ['DB_SSLMODE']
 
 if __name__ == "__main__":
     #connect to db
@@ -29,7 +29,8 @@ if __name__ == "__main__":
         dbname=POSTGRES_DB,
         user=POSTGRES_USER,
         password=POSTGRES_PASSWORD,
-        port=DB_PORT
+        port=DB_PORT,
+        sslmode=DB_SSLMODE
     )
     cur = conn.cursor()
     print('connected to pg!')
