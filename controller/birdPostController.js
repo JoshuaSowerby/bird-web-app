@@ -7,6 +7,7 @@ const { randomUUID } = require('node:crypto');
 
 // GET POST
 exports.getAllBirdPosts= async (req, res)=>{
+    //check cache first...A2 TODO
     //add pagination and filters etc
     const query = req.query;
     try {

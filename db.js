@@ -82,9 +82,11 @@ const pool = new Pool({
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 -- public_id -- should add this, and then change jwt to use it instead,
-                username VARCHAR(25) NOT NULL,
-                email VARCHAR(255) NOT NULL UNIQUE,
-                pw_hash VARCHAR(60) NOT NULL
+                username VARCHAR(25) NOT NULL UNIQUE,
+                sub VARCHAR(36) NOT NULL UNIQUE
+                -- these are handled by cognito
+                -- email VARCHAR(255) NOT NULL UNIQUE,
+                -- pw_hash VARCHAR(60) NOT NULL
             );`,
             `/* posts
             - would be good if we allowed users to add suggested tags
