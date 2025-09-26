@@ -1,27 +1,33 @@
-make an `.env` with
+
+required .env
 ```
 #Web app
-PORT=3000
-JWT_SECRET=secretKey
-DB_HOST=db
-DB_USER=user
-DB_PASSWORD=pass
-DB_NAME=birddb
-BUCKET=s3Bucketname
-REGION=ap-southeast-2
-QUT_USERNAME=qut-username
-PURPOSE=assessment-1
+WEB_APP_PORT=3000
+JWT_SECRET=
 
-#MariaDB
-MARIADB_ROOT_PASSWORD=rootpass
-MARIADB_DATABASE=birddb
-MARIADB_USER=user
-MARIADB_PASSWORD=pass
-```
-then
+#RDS
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_DB=
+DB_HOST=
+DB_PORT=5432
+## AWS only
+DB_SSLMODE=require
 
-```
-docker build -t bird-web-app .
 
-docker-compose up -d
+#AWS
+REGION=
+QUT_USERNAME=
+
+#S3
+BUCKET=
+PURPOSE=
+
+#SQS
+SQS_URL=
+
+#Cognito
+COGNITO_USER_POOL_ID=
+COGNITO_CLIENT_ID=
+COGNITO_CLIENT_SECRET=
 ```

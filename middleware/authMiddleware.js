@@ -4,6 +4,7 @@ const Cognito = require("@aws-sdk/client-cognito-identity-provider");
 // const sub=IdTokenVerifyResult.sub;
 
 const jwt = require("aws-jwt-verify");
+const { userIdFromSub } = require("../models/auth");
 
 const userPoolId = process.env.COGNITO_USER_POOL_ID;
 const clientId = process.env.COGNITO_CLIENT_ID;
@@ -24,7 +25,8 @@ exports.verifyToken = async (req, res, next) =>{
 
     try {
         const IdTokenVerifyResult = await idVerifier.verify(IdToken)
-        req.sub = IdTokenVerifyResult.sub;
+        //req.sub = IdTokenVerifyResult.sub;
+        req.user_id= await userIdFromSub(IdTokenVerifyResult.sub);
         req.groups = IdTokenVerifyResult["cognito:groups"];
         next();
     }catch (err){
