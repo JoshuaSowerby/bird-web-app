@@ -37,8 +37,6 @@ async function loadConfig() {
     process.env.COGNITO_USER_POOL_ID=param.Parameter.Value;
     //aws
     // /n11775556/QUT_USERNAME
-    // param = await ssm.send(new GetParameterCommand({ Name: "/n11775556/BUCKET" }));
-    // process.env.BUCKET=param.Parameter.Value;
     // /n11775556/REGION
     //sqs
     console.log("/n11775556/SQS_URL")
@@ -60,9 +58,13 @@ async function loadConfig() {
     );
     const secret = JSON.parse(secretResponse.SecretString);
     process.env.POSTGRES_USER=secret.POSTGRES_USER
+    console.log(POSTGRES_USER)
     process.env.POSTGRES_PASSWORD=secret.POSTGRES_PASSWORD
+    console.log(POSTGRES_PASSWORD)
     process.env.POSTGRES_DB=secret.POSTGRES_DB
+    console.log(POSTGRES_DB)
     process.env.COGNITO_CLIENT_SECRET=secret.COGNITO_CLIENT_SECRET
+    console.log(COGNITO_CLIENT_SECRET)
 };
 async function startApp() {
     await loadConfig();
