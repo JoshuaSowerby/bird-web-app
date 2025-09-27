@@ -1,5 +1,6 @@
 # A2 todo
 ---
+
 alot of this is AWS side...
 # DATABASE
 - all instances of client need to be wrapped in try{...}finally{client.release()}

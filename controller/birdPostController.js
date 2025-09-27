@@ -4,6 +4,7 @@ S3 = require("@aws-sdk/client-s3");
 const {s3Client} = require('../db.js')
 const SQS = require("@aws-sdk/client-sqs");
 const { randomUUID } = require('node:crypto');
+const memcached = require('../utils/cache.js');
 
 // GET POST
 exports.getAllBirdPosts= async (req, res)=>{
@@ -11,8 +12,28 @@ exports.getAllBirdPosts= async (req, res)=>{
     //add pagination and filters etc
     const query = req.query;
     try {
+        //always return if query contains anything
+        if (Object.keys(query).length>0){
+            console.log("query, no cache")
+            const result = await getAllPosts(query);
+            return res.status(200).json(result)
+        }
+
+        //try cache
+        const cacheKey= req.originalUrl;
+        console.log("try cache")
+        const value = await memcached.aGet(cacheKey);
+        if (value) {
+            console.log(`cached result for ${cacheKey}`);
+            return res.status(200).json(value);
+        }
+        //no cache
+        console.log(`no cached for ${cacheKey}`);
         const result = await getAllPosts(query);
-        return res.status(201).json(result)
+        // Cache the data with TTL of 600 seconds
+        await memcached.aSet(cacheKey, result, 600);
+        return res.status(200).json(result)
+        
     } catch (error){
         res.status(500).json({ message:error.message});
     }
@@ -28,7 +49,7 @@ exports.getBirdPost= async (req, res)=>{
         if (!post){
             return res.status(404)
         }
-        return res.status(201).json(post);
+        return res.status(200).json(post);
     } catch (error){
         res.status(500).json({message: error.message});
     }

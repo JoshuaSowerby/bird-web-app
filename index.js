@@ -40,6 +40,9 @@ const secretsManager = new SecretsManager({ region: process.env.REGION });
     //secret manager
     param = await ssm.send(new SSM.GetParameterCommand({ Name: "/n11775556/SECRET_MANAGER" }));
     process.env.SECRET_MANAGER=param.Parameter.Value;
+    //memcache
+    param = await ssm.send(new SSM.GetParameterCommand({ Name: "/n11775556/MEM_CACHE_ADDRESS" }));
+    process.env.MEM_CACHE_ADDRESS=param.Parameter.Value;
 
     //load secret manager
     const secretResponse = await secretsManager.getSecretValue({ SecretId: process.env.SECRET_MANAGER });
