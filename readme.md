@@ -3,7 +3,6 @@ required .env
 ```
 #Web app
 WEB_APP_PORT=3000
-JWT_SECRET=
 
 #RDS
 POSTGRES_USER=
