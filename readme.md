@@ -1,6 +1,13 @@
 
 required .env
 ```
+REGION=
+QUT_USERNAME=
+DB_SSLMODE=require
+```
+
+old
+```
 #Web app
 WEB_APP_PORT=3000
 

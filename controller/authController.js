@@ -1,6 +1,6 @@
 const Cognito = require("@aws-sdk/client-cognito-identity-provider");
 const crypto = require("crypto");
-const {commitUser} = require('./models/auth.js');
+const {commitUser} = require('../models/auth.js');
 
 const clientId = process.env.COGNITO_CLIENT_ID;  // Obtain from the AWS console
 const clientSecret = process.env.COGNITO_CLIENT_SECRET;  // Obtain from the AWS 
