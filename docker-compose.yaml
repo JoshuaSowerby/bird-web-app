@@ -1,13 +1,13 @@
 version: '3.8'
 services:
   app:
-    image: bird-web-app
+    image: 901444280953.dkr.ecr.ap-southeast-2.amazonaws.com/n11775556-repo:bird-web-app
     env_file:
       - .env
     ports:
       - "3000:3000"
   py:
-    image: bird-classifier
+    image: 901444280953.dkr.ecr.ap-southeast-2.amazonaws.com/n11775556-repo:bird-classifier
     env_file:
       - .env
     depends_on:
