@@ -104,7 +104,7 @@ exports.getAllPosts = async (query={}) =>{
 //TODO show votes in this get
 exports.getPostById = async(id) =>{
     const client = await pool.connect();
-    const result = await client.query('SELECT * FROM posts WHERE id = $1',[id]);
+    const result = await client.query('SELECT * FROM posts WHERE id = $1',[Number(id)]);
     client.release();
     // removing uuid and adding presigned link
     const post = result.rows[0]
@@ -123,7 +123,7 @@ exports.createPost = async (user_id, img_uuid, title, ai_species, visibility='vi
     const result = await client.query(`
         INSERT INTO posts ( user_id, img_uuid, title, ai_species, visibility
         ) VALUES ($1,$2,$3, $4, $5)
-         RETURNING id`,[user_id, img_uuid, title, ai_species, visibility]);
+         RETURNING id`,[Number(user_id), img_uuid, title, ai_species, visibility]);
     client.release();
     const post_id = result.rows[0].id
     return post_id;///check
@@ -135,7 +135,7 @@ exports.updateBirdPrediction = async (post_id, prediction) =>{
         const result = await client.query(`
                 UPDATE posts
                 SET ai_species = $1
-                WHERE id = $2`, [prediction, post_id]);
+                WHERE id = $2`, [prediction, Number(post_id)]);
     } catch (error){
         console.error(error);
     }finally{
@@ -155,7 +155,7 @@ exports.updatePostById = async (id,visibility,title)=>{
         visResult= await client.query(`
             UPDATE posts
             SET visibility =$1, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2`, [visibility, id])
+            WHERE id = $2`, [visibility, Number(id)])
     } else {
         visResult = {rowCount:-1};
     }
@@ -164,7 +164,7 @@ exports.updatePostById = async (id,visibility,title)=>{
         titleResult= await client.query(`
             UPDATE posts
             SET title =$1, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2`, [title, id])
+            WHERE id = $2`, [title, Number(id)])
     } else {
         titleResult = {rowCount:-1};
     }
@@ -179,9 +179,9 @@ exports.deletePostById = async(post_id, user_id) =>{
     const client = await pool.connect();
     const result  = await client.query(
         `DELETE FROM posts
-        WHERE id = $1 AND user_id =$2`,[post_id, user_id]);
+        WHERE id = $1 AND user_id =$2`,[Number(post_id), Number(user_id)]);
     client.release();
-    return { deleted: result.rowCounts > 0 };
+    return { deleted: result.rowCount > 0 };
 };
 
 //vote
@@ -191,7 +191,7 @@ exports.voteOnPost = async (user_id, post_id, vote)=>{
         INSERT INTO post_votes (user_id, post_id, vote)
         VALUES ($1,$2,$3)
         ON CONFLICT (user_id, post_id) DO UPDATE
-            SET vote = EXCLUDED.vote`,[user_id, post_id, vote]
+            SET vote = EXCLUDED.vote`,[Number(user_id), Number(post_id), Number(vote)]
     );
     client.release();
     return result;//unused
@@ -200,7 +200,7 @@ exports.voteOnPost = async (user_id, post_id, vote)=>{
 exports.getPostVotes = async (post_id)=>{
     const client = await pool.connect();
     const result = await client.query(`
-        SELECT SUM(vote) FROM post_votes WHERE post_id=$1`,[post_id]);
+        SELECT SUM(vote) FROM post_votes WHERE post_id=$1`,[Number(post_id)]);
     client.release();
     return result.rows; //check format, may need to be result[0]
 }

@@ -78,7 +78,7 @@ exports.getAllComments = async (query={}) =>{
 
 exports.getCommentById = async(id) =>{
     const client = await pool.connect();
-    const result = await client.query('SELECT * FROM comments WHERE id = $1',[id]);
+    const result = await client.query('SELECT * FROM comments WHERE id = $1',[Number(id)]);
     client.release();
     console.log('show vote count...')
     return result.rows[0];
@@ -93,12 +93,12 @@ exports.createComment = async (user_id, post_id, text, parent_id) => {
             result = await client.query(`
                 INSERT INTO comments ( user_id, post_id, text, parent_id)
                 VALUES ($1, $2, $3, $4)
-                RETURNING id`,[user_id, post_id, text, parent_id]);
+                RETURNING id`,[Number(user_id), Number(post_id), text, Number(parent_id)]);
         } else{
             result = await client.query(`
                 INSERT INTO comments ( user_id, post_id, text)
                 VALUES ($1, $2, $3)
-                RETURNING id`,[user_id, post_id, text]);
+                RETURNING id`,[Number(user_id), Number(post_id), text]);
         }
         const comment_id = result.rows[0].id;
         return comment_id;
@@ -111,7 +111,7 @@ exports.updateCommentById = async (comment_id, user_id,text)=>{
     const result= await client.query(`
         UPDATE comments
         SET text = $1, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2 AND user_id =$3`, [text, comment_id, user_id]
+        WHERE id = $2 AND user_id =$3`, [text, Number(comment_id), Number(user_id)]
     );
     client.release();
     return { updated: result.rowCount > 0};
@@ -120,7 +120,7 @@ exports.updateCommentById = async (comment_id, user_id,text)=>{
 // delete
 exports.deleteCommentById = async(comment_id, user_id) =>{
     const client = await pool.connect();
-    const result  = await client.query('DELETE FROM comments WHERE id = $1 AND user_id =$2',[comment_id, user_id]);
+    const result  = await client.query('DELETE FROM comments WHERE id = $1 AND user_id =$2',[Number(comment_id), Number(user_id)]);
     client.release();
     return { deleted: result.rowCount > 0 };
 };
@@ -132,7 +132,7 @@ exports.voteOnComment = async (user_id, comment_id, vote)=>{
         INSERT INTO comment_votes (user_id, comment_id, vote)
         VALUES ($1, $2, $3)
         ON CONFLICT (user_id, comment_id) DO UPDATE
-            SET vote = EXCLUDED.vote`,[user_id, comment_id, vote]
+            SET vote = EXCLUDED.vote`,[Number(user_id), Number(comment_id), Number(vote)]
     );
     client.release();
     return result.rowCount>0;
@@ -141,7 +141,7 @@ exports.voteOnComment = async (user_id, comment_id, vote)=>{
 exports.getCommentVotes = async (comment_id)=>{
     const client = await pool.connect();
     const result = await client.query(`
-        SELECT SUM(vote) FROM comment_votes WHERE comment_id=$1`,[comment_id]);
+        SELECT SUM(vote) FROM comment_votes WHERE comment_id=$1`,[Number(comment_id)]);
     client.release();
     return result.rows; //check format
 }
