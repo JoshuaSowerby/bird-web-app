@@ -26,6 +26,9 @@ exports.registerUser = async (req, res) => {
             UserAttributes: [{ Name: "email", Value: email }],
         });
         const cognitoRes = await client.send(command);
+        const sub =cognitoRes.UserSub;
+        //const usernameRes = cognitoRes["cognito:username"];//technically redundant as username hs to be correct to get here
+        await commitUser(username,sub);
         res.status(200).json({message:'success'})
         //cognitoRes.UserSub should I add to db here?
 
@@ -46,9 +49,7 @@ exports.confirmUser = async (req, res) => {
             ConfirmationCode: code,
         });
         const cognitoRes = await client.send(command);
-        const sub =cognitoRes.sub;
-        const usernameRes = cognitoRes["cognito:username"];//technically redundant as username hs to be correct to get here
-        await commitUser(usernameRes,sub);
+        
         res.status(200).json({message:"success"});
         //cognitoRes doesnt give anything of interest here (other than session)
     } catch (error) {
