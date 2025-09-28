@@ -1,3 +1,6 @@
+const { deleteCommentById } = require("../models/comments");
+const { deletePostById } = require("../models/posts");
+
 exports.adminDeleteComment= async (req, res)=>{
     //
     try{
@@ -10,7 +13,7 @@ exports.adminDeleteComment= async (req, res)=>{
         const result = await deleteCommentById(comment_id, user_id)
         return res.status(201).json({message:"success", result})
     } catch(error){
-        return res.status(500).json(error)//bad FIX
+        res.status(500).json({ message:error.message});
     }
 }
 
@@ -24,6 +27,6 @@ exports.adminDeleteBirdPost= async (req, res)=>{
         const result =  await deletePostById(post_id, user_id);
         return res.status(201).json({message:'success', result});
     } catch(error){
-        return res.status(500).json(error)//bad FIX
+        res.status(500).json({ message:error.message});
     }
 }

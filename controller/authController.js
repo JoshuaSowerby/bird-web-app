@@ -33,7 +33,7 @@ exports.registerUser = async (req, res) => {
         //cognitoRes.UserSub should I add to db here?
 
     } catch (error) {
-        res.status(500).json(error)
+        res.status(500).json({ message:error.message});
     }
 };
 
@@ -53,7 +53,7 @@ exports.confirmUser = async (req, res) => {
         res.status(200).json({message:"success"});
         //cognitoRes doesnt give anything of interest here (other than session)
     } catch (error) {
-        res.status(500).json(error)
+        res.status(500).json({ message:error.message});
     }
 
 };
@@ -78,7 +78,7 @@ exports.loginUser = async (req, res) => {
         const session = cognitoRes.Session//.IdToken;
         return res.status(200).json({session})
     } catch (error) {
-        res.status(500).json(error);
+        res.status(500).json({ message:error.message});
     }
 
 };
@@ -100,7 +100,7 @@ exports.challenge = async (req, res) => {
         const challengeRes= await client.send(command);
         res.status(200).json({token: challengeRes.AuthenticationResult.IdToken});
     } catch (error) {
-        res.status(500).json(error);
+        res.status(500).json({ message:error.message});
     }
     
 };
