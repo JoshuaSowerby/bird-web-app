@@ -58,13 +58,13 @@ async function loadConfig() {
     );
     const secret = JSON.parse(secretResponse.SecretString);
     process.env.POSTGRES_USER=secret.POSTGRES_USER
-    console.log(POSTGRES_USER)
+    console.log("POSTGRES_USER")
     process.env.POSTGRES_PASSWORD=secret.POSTGRES_PASSWORD
-    console.log(POSTGRES_PASSWORD)
+    console.log("POSTGRES_PASSWORD")
     process.env.POSTGRES_DB=secret.POSTGRES_DB
-    console.log(POSTGRES_DB)
+    console.log("POSTGRES_DB")
     process.env.COGNITO_CLIENT_SECRET=secret.COGNITO_CLIENT_SECRET
-    console.log(COGNITO_CLIENT_SECRET)
+    console.log("COGNITO_CLIENT_SECRET")
 };
 async function startApp() {
     await loadConfig();
