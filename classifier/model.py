@@ -8,17 +8,24 @@ from PIL import Image
 
 import io ## -- ai
 
-import timm
+# import timm
 
 class DeepNet(nn.Module):
     def __init__(self):
         super().__init__()
         #outputs of layer x must equal inputs of layer x+1
-        n0=192
-        n1=202
-        n2=212
-        #n3=222
+        # n0=192
+        # n1=202
+        # n2=212
+        # #n3=222
+        # n4=235#num of classes
+
+        n0=384
+        n1=345
+        n2=305
+        n3=265
         n4=235#num of classes
+
         self.dropout = nn.Dropout(0.3)
         self.leakyRelu=nn.LeakyReLU()
 
@@ -28,18 +35,18 @@ class DeepNet(nn.Module):
         self.fc2 = nn.Linear(n1, n2)
         self.bn2= nn.BatchNorm1d(n2)
 
-        #self.fc3 = nn.Linear(n2, n3)
-       # self.bn3= nn.BatchNorm1d(n3)
+        self.fc3 = nn.Linear(n2, n3)#
+        self.bn3= nn.BatchNorm1d(n3)#
         
         self.fc4 = nn.Linear(n2, n4)#changed form n3
        
        # Weight initialisation. Apparently this should stop weights exploding or vanishing at start... makes training more stable
         nn.init.kaiming_normal_(self.fc1.weight, nonlinearity='leaky_relu')
         nn.init.kaiming_normal_(self.fc2.weight, nonlinearity='leaky_relu')
-       # nn.init.kaiming_normal_(self.fc3.weight, nonlinearity='leaky_relu')
+        nn.init.kaiming_normal_(self.fc3.weight, nonlinearity='leaky_relu')#
         nn.init.kaiming_normal_(self.fc4.weight, nonlinearity='leaky_relu')
-       # for layer in [self.fc1, self.fc2, self.fc3, self.fc4]:
-        for layer in [self.fc1, self.fc2, self.fc4]:
+        for layer in [self.fc1, self.fc2, self.fc3, self.fc4]:
+        # for layer in [self.fc1, self.fc2, self.fc4]:
             if layer.bias is not None:
                 nn.init.constant_(layer.bias,0.0)
 
@@ -53,7 +60,7 @@ class DeepNet(nn.Module):
         x = self.leakyRelu(x)
         x = self.dropout(x)
         
-       # x = self.bn3(self.fc3(x))
+        x = self.bn3(self.fc3(x))#
         x = self.leakyRelu(x)
         x = self.dropout(x)
         
@@ -83,10 +90,11 @@ class birdClassifier():
         #headPath=r"weights.pth"#FIX to use sys.argv[1 or 2]...also in what calls this file...
         headPath='./weights.pth'#sys.argv[1]#check
         #backendPath=sys.argv[2]#r""
-        #self.dinoV2=torch.hub.load('facebookresearch/dinov2','dinov2_vits14', pretrained=False,verbose=False)#,pretrained=False)#if it doesn't work, then load_state_dict
-        self.vit_tiny= timm.create_model('vit_tiny_patch16_224.augreg_in21k', pretrained=True, num_classes=0)
+        self.dinoV2=torch.hub.load('facebookresearch/dinov2','dinov2_vits14', pretrained=False,verbose=False)#,pretrained=False)#if it doesn't work, then load_state_dict
+        #self.vit_tiny= timm.create_model('vit_tiny_patch16_224.augreg_in21k', pretrained=True, num_classes=0)
         #self.dinoV2.load_state_dict(torch.load(backendPath,map_location='cpu'))
-        self.vit_tiny.eval()
+        # self.vit_tiny.eval()
+        self.dinoV2.eval()
 
         self.model= DeepNet().cpu()
         self.model.load_state_dict(torch.load(headPath,map_location='cpu'))
@@ -96,7 +104,7 @@ class birdClassifier():
         image = Image.open(io.BytesIO(img_bytes))
         image = image.convert('RGB')#ensure it is jpg
         input=self.val_transform(image).unsqueeze(0)#adds fake batch dim
-        features=self.vit_tiny(input)
+        features=self.dinoV2(input)
         output=self.model(features)
         prediction_idx=torch.argmax(output)
 

@@ -33,16 +33,22 @@ exports.verifyToken = async (req, res, next) =>{
         //try cache
         const cacheKey= `user:${sub}`;
         console.log("try cache userIdFromSub")
-        const value = await memcached.aGet(cacheKey);
-        if (value) {
-            console.log(`cached result for ${cacheKey}`);
-            req.user_id=value
-        } else {
-            console.log(`no cached for ${cacheKey}`);
-             req.user_id= await userIdFromSub(sub);
-            // Cache the data with TTL of 600 seconds
-            await memcached.aSet(cacheKey, req.user_id, 600);           
+        try {
+             const value = await memcached.aGet(cacheKey);
+            if (value) {
+                console.log(`cached result for ${cacheKey}`);
+                req.user_id=value
+            } else {
+                console.log(`no cached for ${cacheKey}`);
+                req.user_id= await userIdFromSub(sub);
+                // Cache the data with TTL of 600 seconds
+                await memcached.aSet(cacheKey, req.user_id, 600);           
+            }
+        } catch (error) {
+            console.log("cached userIdFromSub failed :(")
+            req.user_id= await userIdFromSub(sub);
         }
+       
         //no cache
         
         req.groups = IdTokenVerifyResult["cognito:groups"];

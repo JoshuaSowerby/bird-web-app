@@ -19,20 +19,28 @@ exports.getAllBirdPosts= async (req, res)=>{
             return res.status(200).json(result)
         }
 
-        //try cache
-        const cacheKey= req.originalUrl;
-        console.log("try cache")
-        const value = await memcached.aGet(cacheKey);
-        if (value) {
-            console.log(`cached result for ${cacheKey}`);
-            return res.status(200).json(value);
+        try {
+            //try cache
+            const cacheKey= req.originalUrl;
+            console.log("try cache getall")
+            const value = await memcached.aGet(cacheKey);
+            if (value) {
+                console.log(`cached result for ${cacheKey}`);
+                return res.status(200).json(value);
+            }
+            //no cache
+            console.log(`no cached for ${cacheKey}`);
+            const result = await getAllPosts(query);
+            // Cache the data with TTL of 600 seconds
+            await memcached.aSet(cacheKey, result, 600);
+            return res.status(200).json(result)
+        } catch (error) {
+            console.log("cached get all :(")
+            console.log(error.message)
+            const result = await getAllPosts(query);
+            return res.status(200).json(result)
         }
-        //no cache
-        console.log(`no cached for ${cacheKey}`);
-        const result = await getAllPosts(query);
-        // Cache the data with TTL of 600 seconds
-        await memcached.aSet(cacheKey, result, 600);
-        return res.status(200).json(result)
+        
         
     } catch (error){
         res.status(500).json({ message:error.message});
