@@ -99,6 +99,7 @@ const pool = new Pool({
                 title VARCHAR(255) NOT NULL,
                 /* votes INT DEFAULT 0, -- has its own table */
                 ai_species VARCHAR(255),
+                description VARCHAR(255),
                 posted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 visibility VARCHAR(20) NOT NULL DEFAULT 'visible'

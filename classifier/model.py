@@ -10,6 +10,8 @@ import io ## -- ai
 
 # import timm
 
+from transformers import BlipProcessor, BlipForConditionalGeneration
+
 class DeepNet(nn.Module):
     def __init__(self):
         super().__init__()
@@ -101,6 +103,10 @@ class birdClassifier():
         self.model.load_state_dict(torch.load(headPath,map_location='cpu'))
         self.model.eval()
 
+        self.processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+        self.desc_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
+
+
     def classifyImg(self, img_bytes):
         image = Image.open(io.BytesIO(img_bytes))
         image = image.convert('RGB')#ensure it is jpg
@@ -110,7 +116,15 @@ class birdClassifier():
         prediction_idx=torch.argmax(output)
 
         predicted_bird= self.class_labels[prediction_idx]
-        return predicted_bird
+
+        #description
+        inputs = self.processor(image, return_tensors="pt")
+        out = self.desc_model.generate(**inputs, max_new_tokens=30)
+        description= self.processor.decode(out[0], skip_special_tokens=True)
+    
+        return [predicted_bird,description]
+    
+
 
 
 '''

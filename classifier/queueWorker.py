@@ -98,13 +98,14 @@ if __name__ == "__main__":
                 response = s3_client.get_object(Bucket=BUCKET, Key=img_uuid)
                 img_bytes = response['Body'].read()
                 
-                ai_species=classifier.classifyImg(img_bytes)
-                print(f"ai_species:{ai_species}")
+                ai_species,description=classifier.classifyImg(img_bytes)
+                print(f"ai_species:{ai_species}\ndescription:{description}")
                 
                 cur.execute(
                     "UPDATE posts"
-                    " SET ai_species = %s"
-                    " WHERE img_uuid = %s;", (ai_species, img_uuid))
+                    " SET ai_species = %s,"
+                    " description = %s"
+                    " WHERE img_uuid = %s;", (ai_species, description, img_uuid))
                 conn.commit()
                 #cur.close()
                 #conn.close()

@@ -23,6 +23,7 @@ exports.getAllPosts = async (query={}) =>{
     posts.id AS post_id, posts.user_id AS user_id,
     users.username AS username, posts.img_uuid AS img_uuid,
     posts.title AS title, posts.ai_species as ai_species,
+    posts.description as description,
     COALESCE(vote_sum.votes, 0) AS votes,
     posts.posted_at AS posted_at
     FROM posts
@@ -90,7 +91,7 @@ exports.getAllPosts = async (query={}) =>{
     
     const updatedRows = await Promise.all( //-- ai gen from pervious iteration
         result.rows.map(async row => {
-            console.log(`CACHE THIS url, or just ave to db, FIX`)
+            //console.log(`CACHE THIS url, or just ave to db, FIX`)
             const presignedURL = await getPresignedURL(row.img_uuid);
             row.imgURL = presignedURL;
             delete row.img_uuid;
@@ -108,6 +109,7 @@ exports.getPostById = async(id) =>{
     client.release();
     // removing uuid and adding presigned link
     const post = result.rows[0]
+    ///cache----
     const presignedURL = await getPresignedURL(post.img_uuid);
     post.imgURL= presignedURL
     delete post.img_uuid;
