@@ -38,7 +38,8 @@ class DeepNet(nn.Module):
         self.fc3 = nn.Linear(n2, n3)#
         self.bn3= nn.BatchNorm1d(n3)#
         
-        self.fc4 = nn.Linear(n2, n4)#changed form n3
+        #self.fc4 = nn.Linear(n2, n4)#changed form n3
+        self.fc4 = nn.Linear(n3, n4)#changed form n3
        
        # Weight initialisation. Apparently this should stop weights exploding or vanishing at start... makes training more stable
         nn.init.kaiming_normal_(self.fc1.weight, nonlinearity='leaky_relu')
