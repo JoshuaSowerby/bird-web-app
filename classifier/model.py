@@ -91,7 +91,7 @@ class birdClassifier():
         #headPath=r"weights.pth"#FIX to use sys.argv[1 or 2]...also in what calls this file...
         headPath='./weights.pth'#sys.argv[1]#check
         #backendPath=sys.argv[2]#r""
-        self.dinoV2=torch.hub.load('facebookresearch/dinov2','dinov2_vits14', pretrained=False,verbose=False)#,pretrained=False)#if it doesn't work, then load_state_dict
+        self.dinoV2=torch.hub.load('facebookresearch/dinov2','dinov2_vits14', pretrained=True,verbose=False)#,pretrained=False)#if it doesn't work, then load_state_dict
         #self.vit_tiny= timm.create_model('vit_tiny_patch16_224.augreg_in21k', pretrained=True, num_classes=0)
         #self.dinoV2.load_state_dict(torch.load(backendPath,map_location='cpu'))
         # self.vit_tiny.eval()
