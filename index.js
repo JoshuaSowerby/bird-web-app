@@ -74,6 +74,7 @@ async function startApp() {
     const authRoutes= require('./router/authRoutes.js');
     const birdPostRoutes = require('./router/birdPostRoutes.js');
     const commentRoutes = require('./router/commentRoutes.js');
+    const healthRoute = require('./router/health.js');
 
     // App
     const app = express();
@@ -84,6 +85,7 @@ async function startApp() {
 
     // Routes
     app.use('/api/v0/admin', admin);
+    app.use('/api/v0/health', healthRoute);
     app.use('/api/v0/auth', authRoutes);
     app.use('/api/v0/bird/posts', birdPostRoutes);
     app.use('/api/v0/bird/posts/:post_id/comments', commentRoutes);
